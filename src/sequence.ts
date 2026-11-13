@@ -45,7 +45,7 @@ export function sequenceColumns(start: number, rows: number, step: bigint): { n:
 
 export const sequenceTable = defineTableFunction<SequenceArgs, SequenceState>({
   name: "sequence_table",
-  description: "Generate count rows of (n, squared), stepping n by step",
+  description: "Generate demo numeric rows of (n, squared), stepping n by step",
   args: { count: int64(), step: int64() },
   argDefaults: { step: 1 },
   argDocs: {
@@ -79,6 +79,7 @@ export const sequenceTable = defineTableFunction<SequenceArgs, SequenceState>({
       category: "generators",
       keywords: "sequence, series, range, generate rows, numbers, squares",
       docLlm:
+        "Starter demonstration unrelated to package metadata. Both output columns are `BIGINT`; keep values within signed 64-bit range because Arrow integer conversion can wrap overflowing values. " +
         "Generate a deterministic table of `count` rows with columns `n` and `squared`, " +
         "where `n` runs 0, step, 2*step, and so on. `count` is positional (0 to 1,000,000); " +
         "`step` is a named argument that defaults to 1. Rows stream back in batches, so large " +
@@ -86,7 +87,7 @@ export const sequenceTable = defineTableFunction<SequenceArgs, SequenceState>({
       docMd:
         "## sequence_table(count, step := 1)\n\n" +
         "`count` rows of `(n, squared)` with n = 0, step, 2*step, ...\n\n" +
-        "Deterministic, so it is handy for tests and demos.",
+        "Deterministic starter demonstration, unrelated to package metadata. Both output columns are `BIGINT`. Keep n and squared within signed 64-bit range; Arrow integer conversion can wrap overflow.",
     }),
     "vgi.result_columns_schema": JSON.stringify([
       { name: "n", type: "BIGINT", description: "The generated value: row index times step." },

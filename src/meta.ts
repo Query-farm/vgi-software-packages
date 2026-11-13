@@ -120,7 +120,7 @@ export const AGENT_TEST_TASKS = [
     name: "sum_of_squares",
     prompt:
       "Using the packages worker, what is the sum of the squared column for the first 10 rows " +
-      "of the sequence with the default step?",
+      "of the sequence with the default step? Return one column named total.",
   },
   {
     name: "stepped_sequence",

@@ -222,6 +222,35 @@ const descriptions: Record<string, string> = {
   layers: "Inspect ordered layer descriptors without downloading image layer content",
   configuration: "Read and verify the image configuration JSON for a platform manifest",
 };
+const guidance: Record<string, string> = {
+  sources:
+    "One row per configured source. Use source_id to call registry functions. Endpoint URLs are sanitized; authentication reports anonymous, auto, or required. credential_configured describes environment/file references, not SQL-secret availability. search_mode distinguishes native provider search from a prepared local index. This relation is available as both a table and a zero-argument function.",
+  capabilities:
+    "One row per source_id and operation. Join this relation to sources using source_id to obtain the endpoint and authentication settings. supported reports adapter support even when an index has not been prepared. Package operations are search, package, versions, artifacts and dependencies; container operations are search, repository, tags, manifest, platforms, layers and configuration. searched_fields is a comma-separated list for search and NULL for other operations. Inspect description for operation-specific limits. This relation is both a table and a zero-argument function.",
+  source_status:
+    "One row per source_id describing search readiness. Join to sources using source_id for endpoint details. Indexed sources report the last committed snapshot, observation time, source revision, record count, checkpoint, declared coverage and completeness. complete means the declared input was exhausted, not ecosystem-wide coverage. Native readiness indicates adapter availability, not a remote health probe. Failed inspection produces ready=false and a safe error code. This relation is both a table and a zero-argument function.",
+  search:
+    "Find package names or image repositories before requesting their detailed metadata. Native search keeps provider ranking; scores are provider-specific and nullable. Prepared indexes use case-insensitive substring matching and deterministic name order. PyPI and Go search names; other prepared indexes include descriptions. Inspect source_status before indexed search. The explicit row budget caps output without an additional truncation flag; coverage and complete describe the index input, not the result count.",
+  package:
+    "Read descriptive metadata for one native package identity, normally one row. npm/PyPI/RubyGems use provider-selected current metadata; NuGet selects the last registration entry; prepared repositories expose one representative indexed package record. Maven names use groupId:artifactId and Go names preserve module-path case. Missing live packages raise NOT_FOUND; a missing indexed name returns zero rows. Use versions for the release inventory, artifacts for files, and dependencies for requirements.",
+  versions:
+    "List original version strings and available publication, platform, build, yanked and deprecation fields. Unknown provider fields are NULL. Order follows provider metadata or the prepared snapshot and is not a universal newest-first ordering. Use the returned version strings verbatim for artifacts and dependencies. Prepared repositories expose releases present in their configured snapshot, not complete historical archives. Output is capped by the row budget without a separate truncation flag.",
+  artifacts:
+    "Inspect files or Nix outputs for an exact package release. Rows include native filenames, artifact types, platforms, upstream size when available, URLs and hashes JSON keyed by the upstream algorithm or integrity field. Checksums are reported metadata; artifact bytes are not downloaded or verified here. URL credentials and query parameters are stripped. Maven returns the POM and packaging artifact, not every classifier. Nix store paths do not imply binary-cache availability.",
+  dependencies:
+    "One row per declared requirement of an exact package version. dependency identifies the target or capability; requirement retains the ecosystem expression; kind preserves dependency category; condition holds markers, frameworks or platform restrictions when available. metadata preserves additional native details such as features and optional flags. Declarations are not a solved installation graph. Maven parent/BOM properties can remain unresolved and PyPI per-file metadata can differ. nixpkgs dependencies are explicitly unsupported. Choose a release from versions first.",
+  repository:
+    "Read one Docker Hub or Quay repository's provider description and available star/pull counts. Counts may be NULL and can change over time. Private reads require an API credential with visibility into the repository; registry pull credentials can be configured separately. A missing repository raises NOT_FOUND. Use tags for its image references and manifest for immutable content identification.",
+  tags: "List mutable image tag strings using OCI registry pagination. Tags are not resolved to digests here; call manifest for a selected tag. Output follows registry pagination order and stops at the row budget without an extra truncation flag. New or deleted tags can change the inventory between requests. Registry authentication can differ from the provider search API credential.",
+  manifest:
+    "Resolve an image tag or SHA256 digest to a verified OCI/Docker schema 2 manifest. Returns the computed digest, media_type and complete sanitized manifest JSON. The bytes are checked against a requested SHA256 digest and the server's SHA256 digest header when present. Unsupported digest algorithms fail explicitly. A manifest may be a platform index; use platforms to inspect its child descriptors before requesting layers or configuration.",
+  platforms:
+    "For a multi-platform index, return each child manifest's digest, media type, size, OS, architecture and optional variant; index_digest identifies the verified parent. A single-platform manifest returns its platform from a verified configuration blob. Descriptor values are preserved as reported; child manifests are verified when fetched. Select a platform digest for layers or configuration rather than passing the multi-platform index.",
+  layers:
+    "Return ordered layer descriptors from one verified platform manifest. position is zero-based; digest is the layer blob digest; size is the declared compressed byte count. Only manifest metadata is downloaded: layer contents and layer checksums are not fetched or verified. Passing a multi-platform index raises PLATFORM_REQUIRED; obtain a child digest with platforms first.",
+  configuration:
+    "Download and verify the small configuration blob referenced by one platform manifest. digest identifies the verified owning manifest and config_digest identifies the verified configuration. OS, architecture and variant are projected into columns; sanitized metadata JSON contains the configuration, including history and runtime settings. Layer payloads are not fetched. Passing a multi-platform index raises PLATFORM_REQUIRED.",
+};
 interface Args {
   source_id: string;
   package_name: string;
@@ -266,12 +295,15 @@ export function softwareFunctions(container: boolean): VgiFunction[] {
           docs.query = "Nonempty search text over the fields advertised by capabilities().";
         } else {
           args.package_name = utf8();
-          docs.package_name = "Native package identity, groupId:artifactId, or namespace/repository.";
+          docs.package_name = container
+            ? "Image repository as namespace/repository; Docker Hub also accepts official short names."
+            : "Native package identity; Maven uses groupId:artifactId and nixpkgs uses an attribute path.";
         }
         if (["artifacts", "dependencies", "manifest", "platforms", "layers", "configuration"].includes(name)) {
           args.version = utf8();
-          docs.version =
-            "Exact package version or image tag/digest. Select a platform digest before requesting image layers.";
+          docs.version = container
+            ? "Image tag or SHA256 digest. Layers and configuration require a single-platform manifest."
+            : "Exact native package version from versions().";
         }
         args.max_results = int64();
         docs.max_results = "Maximum returned rows, 1 through 10000. Remote requests also obey the configured budgets.";
@@ -285,7 +317,21 @@ export function softwareFunctions(container: boolean): VgiFunction[] {
             : staticFn
               ? ""
               : `'${container ? "quay" : "pypi"}_public', '${container ? "prometheus/prometheus" : "requests"}'${["artifacts", "dependencies", "manifest", "platforms", "layers", "configuration"].includes(name) ? `, '${container ? "latest" : "2.32.3"}'` : ""}`;
-      const projection = staticFn ? "source_id" : "name";
+      const projection =
+        (
+          {
+            capabilities: "source_id, operation, supported",
+            source_status: "source_id, ready, search_mode",
+            versions: "version, published_at",
+            artifacts: "filename, artifact_type, hashes",
+            dependencies: "dependency, requirement, condition",
+            tags: "tag",
+            manifest: "digest, media_type",
+            platforms: "digest, os, architecture",
+            layers: "position, digest, size",
+            configuration: "os, architecture, config_digest",
+          } as Record<string, string>
+        )[name] ?? (staticFn ? "source_id" : "name");
       const example = `SELECT ${projection} FROM ${catalog}.main.${name}(${exampleArgs}) ORDER BY ${projection} LIMIT 10`;
       const description = descriptions[name] ?? name;
       return defineTableFunction<Args, State>({
@@ -389,8 +435,8 @@ export function softwareFunctions(container: boolean): VgiFunction[] {
               .join(" "),
             category: "api",
             keywords: "software, registry, package, container, metadata, authentication, search",
-            docLlm: `${description}. ${staticFn ? "Use this discovery table before selecting sources." : "Indexed sources must first be prepared with bin/vgi-software-index. Results preserve native identity and NULL values. Dependencies are declarations, not solved graphs. HTTP errors and incomplete reads fail explicitly. Native search preserves provider order; inspect coverage before comparing sources."}`,
-            docMd: `${description}.\n\nRead source_status() for index coverage. Credentials come from a source-scoped software_registry secret before configured environment or file references. Public endpoints that allow anonymous reads need no credentials. Returned dependencies preserve upstream conditions; image layers contain descriptors only.`,
+            docLlm: `${description}. ${guidance[name]} Result columns (nullable when upstream data is unavailable): ${specs.map(([n, t, d]) => `${n} \`${t}\`: ${d}`).join(" ")}`,
+            docMd: `${guidance[name]}\n\n### Returned columns\n\nUnknown or inapplicable values are NULL.\n\n| Column | SQL type | Meaning |\n| --- | --- | --- |\n${specs.map(([n, t, d]) => `| ${n} | \`${t}\` | ${d} |`).join("\n")}`,
           }),
           "vgi.result_columns_schema": json(specs.map(([n, type, description]) => ({ name: n, type, description }))),
         },
