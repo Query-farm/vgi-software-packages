@@ -26,50 +26,53 @@ export const CONTAINER_CATALOG: CatalogDescriptor = {
     "vgi.agent_test_tasks": JSON.stringify([
       {
         name: "containers_sources",
-        prompt: "Using the containers worker, return all columns from sources for all configured sources.",
+        prompt:
+          "Using the containers worker, list sources for all configured sources. Return exactly the columns source_id, ecosystem, authentication, search_mode, ordered by source_id.",
       },
       {
         name: "containers_capabilities",
-        prompt: "Using the containers worker, return all columns from capabilities for all configured sources.",
+        prompt:
+          "Using the containers worker, list capabilities for all configured sources. Return exactly the columns source_id, operation, supported, search_mode, ordered by source_id, operation.",
       },
       {
         name: "containers_source_status",
-        prompt: "Using the containers worker, return all columns from source_status for all configured sources.",
+        prompt:
+          "Using the containers worker, list source_status for all configured sources. Return exactly the columns source_id, search_mode, ready, ordered by source_id.",
       },
       {
         name: "containers_search",
         prompt:
-          "Using the containers worker, return all columns from search for the inputs 'dockerhub_public', 'postgres', 5.",
+          "Using the containers worker, query search with inputs 'dockerhub_public', 'postgres', 5. Return exactly the columns name, ordered by name.",
       },
       {
         name: "containers_repository",
         prompt:
-          "Using the containers worker, return all columns from repository for the inputs 'dockerhub_public', 'library/hello-world'.",
+          "Using the containers worker, query repository with inputs 'dockerhub_public', 'library/hello-world'. Return exactly the columns name, description, ordered by name.",
       },
       {
         name: "containers_tags",
         prompt:
-          "Using the containers worker, return all columns from tags for the inputs 'dockerhub_public', 'library/hello-world'.",
+          "Using the containers worker, query tags with inputs 'dockerhub_public', 'library/hello-world', max_results := 10. Return exactly the columns tag, ordered by tag.",
       },
       {
         name: "containers_manifest",
         prompt:
-          "Using the containers worker, return all columns from manifest for the inputs 'quay_public', 'prometheus/prometheus', 'sha256:89c1a644817e9ad70fa2af76c84898e327c1de7063735f962e8313b1e28672c3'.",
+          "Using the containers worker, query manifest with inputs 'quay_public', 'prometheus/prometheus', 'sha256:89c1a644817e9ad70fa2af76c84898e327c1de7063735f962e8313b1e28672c3'. Return exactly the columns digest, media_type, ordered by digest.",
       },
       {
         name: "containers_platforms",
         prompt:
-          "Using the containers worker, return all columns from platforms for the inputs 'quay_public', 'prometheus/prometheus', 'sha256:89c1a644817e9ad70fa2af76c84898e327c1de7063735f962e8313b1e28672c3'.",
+          "Using the containers worker, query platforms with inputs 'quay_public', 'prometheus/prometheus', 'sha256:89c1a644817e9ad70fa2af76c84898e327c1de7063735f962e8313b1e28672c3'. Return exactly the columns digest, os, architecture, ordered by digest.",
       },
       {
         name: "containers_layers",
         prompt:
-          "Using the containers worker, return all columns from layers for the inputs 'quay_public', 'prometheus/prometheus', 'sha256:89c1a644817e9ad70fa2af76c84898e327c1de7063735f962e8313b1e28672c3'.",
+          "Using the containers worker, query layers with inputs 'quay_public', 'prometheus/prometheus', 'sha256:89c1a644817e9ad70fa2af76c84898e327c1de7063735f962e8313b1e28672c3'. Return exactly the columns position, digest, size, ordered by position.",
       },
       {
         name: "containers_configuration",
         prompt:
-          "Using the containers worker, return all columns from configuration for the inputs 'quay_public', 'prometheus/prometheus', 'sha256:89c1a644817e9ad70fa2af76c84898e327c1de7063735f962e8313b1e28672c3'.",
+          "Using the containers worker, query configuration with inputs 'quay_public', 'prometheus/prometheus', 'sha256:89c1a644817e9ad70fa2af76c84898e327c1de7063735f962e8313b1e28672c3'. Return exactly the columns os, architecture, config_digest, ordered by config_digest.",
       },
     ]),
   },

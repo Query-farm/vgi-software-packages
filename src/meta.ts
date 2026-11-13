@@ -77,38 +77,43 @@ export const SCHEMA_DOC_MD =
 export const AGENT_TEST_TASKS = [
   {
     name: "packages_sources",
-    prompt: "Using the packages worker, return all columns from sources for all configured sources.",
+    prompt:
+      "Using the packages worker, list sources for all configured sources. Return exactly the columns source_id, ecosystem, authentication, search_mode, ordered by source_id.",
   },
   {
     name: "packages_capabilities",
-    prompt: "Using the packages worker, return all columns from capabilities for all configured sources.",
+    prompt:
+      "Using the packages worker, list capabilities for all configured sources. Return exactly the columns source_id, operation, supported, search_mode, ordered by source_id, operation.",
   },
   {
     name: "packages_source_status",
-    prompt: "Using the packages worker, return all columns from source_status for all configured sources.",
+    prompt:
+      "Using the packages worker, list source_status for all configured sources. Return exactly the columns source_id, search_mode, ready, ordered by source_id.",
   },
   {
     name: "packages_search",
     prompt:
-      "Using the packages worker, return all columns from search for the public npm search for typescript, limited to 5 results.",
+      "Using the packages worker, query search with inputs 'npm_public', 'typescript', 5. Return exactly the columns name, ordered by name.",
   },
   {
     name: "packages_package",
-    prompt: "Using the packages worker, return all columns from package for the inputs 'pypi_public', 'requests'.",
+    prompt:
+      "Using the packages worker, query package with inputs 'pypi_public', 'requests'. Return exactly the columns name, version, description, ordered by name.",
   },
   {
     name: "packages_versions",
-    prompt: "Using the packages worker, return all columns from versions for the inputs 'pypi_public', 'requests'.",
+    prompt:
+      "Using the packages worker, query versions with inputs 'pypi_public', 'requests'. Return exactly the columns version, ordered by version.",
   },
   {
     name: "packages_artifacts",
     prompt:
-      "Using the packages worker, return all columns from artifacts for the inputs 'pypi_public', 'requests', '2.32.3'.",
+      "Using the packages worker, query artifacts with inputs 'pypi_public', 'requests', '2.32.3'. Return exactly the columns filename, artifact_type, hashes, ordered by filename.",
   },
   {
     name: "packages_dependencies",
     prompt:
-      "Using the packages worker, return all columns from dependencies for the inputs 'pypi_public', 'requests', '2.32.3'.",
+      "Using the packages worker, query dependencies with inputs 'pypi_public', 'requests', '2.32.3'. Return exactly the columns dependency, requirement, kind, condition, ordered by dependency, requirement, kind, condition.",
   },
   { name: "formal_greeting", prompt: "Using the packages worker, greet the name 'Grace' formally." },
   {

@@ -16,25 +16,18 @@ tasks:
             FROM packages.main.fetch_items('https://vgi-starter-api.query-farm.services/v1') GROUP BY category)
 
   - name: packages_sources
-    reference_sql: "SELECT * FROM packages.main.sources()"
-
+    reference_sql: "SELECT source_id, ecosystem, authentication, search_mode FROM packages.main.sources() ORDER BY source_id"
   - name: packages_capabilities
-    reference_sql: "SELECT * FROM packages.main.capabilities()"
-
+    reference_sql: "SELECT source_id, operation, supported, search_mode FROM packages.main.capabilities() ORDER BY source_id, operation"
   - name: packages_source_status
-    reference_sql: "SELECT * FROM packages.main.source_status()"
-
+    reference_sql: "SELECT source_id, search_mode, ready FROM packages.main.source_status() ORDER BY source_id"
   - name: packages_search
-    reference_sql: "SELECT * FROM packages.main.search('npm_public', 'typescript', 5)"
-
+    reference_sql: "SELECT name FROM packages.main.search('npm_public', 'typescript', 5) ORDER BY name"
   - name: packages_package
-    reference_sql: "SELECT * FROM packages.main.package('pypi_public', 'requests')"
-
+    reference_sql: "SELECT name, version, description FROM packages.main.package('pypi_public', 'requests') ORDER BY name"
   - name: packages_versions
-    reference_sql: "SELECT * FROM packages.main.versions('pypi_public', 'requests')"
-
+    reference_sql: "SELECT version FROM packages.main.versions('pypi_public', 'requests') ORDER BY version"
   - name: packages_artifacts
-    reference_sql: "SELECT * FROM packages.main.artifacts('pypi_public', 'requests', '2.32.3')"
-
+    reference_sql: "SELECT filename, artifact_type, hashes FROM packages.main.artifacts('pypi_public', 'requests', '2.32.3') ORDER BY filename"
   - name: packages_dependencies
-    reference_sql: "SELECT * FROM packages.main.dependencies('pypi_public', 'requests', '2.32.3')"
+    reference_sql: "SELECT dependency, requirement, kind, condition FROM packages.main.dependencies('pypi_public', 'requests', '2.32.3') ORDER BY dependency, requirement, kind, condition"
