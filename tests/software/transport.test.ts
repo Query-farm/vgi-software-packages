@@ -2,6 +2,7 @@ import { afterAll, beforeAll, expect, test } from "bun:test";
 import { join } from "node:path";
 import { Arguments, VgiClient } from "@query-farm/vgi";
 import { subprocessConnect } from "@query-farm/vgi-rpc";
+import { isContainer } from "../../src/software/service.ts";
 import { fixture } from "./fixture.ts";
 
 let f: Awaited<ReturnType<typeof fixture>>;
@@ -42,8 +43,8 @@ async function table(client: VgiClient, name: string, positional: unknown[], nam
 test("both workers expose independent source catalogs and typed booleans", async () => {
   const a = await table(packages, "sources", []),
     b = await table(containers, "sources", []);
-  expect(a.length).toBe(13);
-  expect(b.length).toBe(2);
+  expect(a.length).toBe(20);
+  expect(b.length).toBe(4);
   expect(a[0]?.credential_configured).toBe(false);
   expect(
     (await table(packages, "source_status", []))
@@ -64,7 +65,7 @@ test("VGI multiple batches preserve typed schemas and respect result budgets", a
 });
 test("all adapters bind through the VGI subprocess protocol", async () => {
   for (const source of f.settings.sources) {
-    const client = ["dockerhub", "quay"].includes(source.kind) ? containers : packages;
+    const client = isContainer(source) ? containers : packages;
     const results = await table(client, "search", [source.id, "demo", 25n]);
     expect(results.length).toBeGreaterThan(0);
     expect(results.length).toBeLessThanOrEqual(25);

@@ -1,3 +1,4 @@
+import { hex, packagist, pub } from "./additional_registries.ts";
 import { loadSettings, sourceById } from "./config.ts";
 import { containers } from "./containers.ts";
 import { Http, type Secrets, safeUrl } from "./http.ts";
@@ -5,6 +6,7 @@ import { indexInfo, readIndex } from "./indexes.ts";
 import { maven, nuget } from "./maven_nuget.ts";
 import {
   type Budget,
+  CONTAINER_KINDS,
   INDEXED,
   json,
   type Operation,
@@ -28,12 +30,14 @@ export const CONTAINER_OPERATIONS: Operation[] = [
   "configuration",
 ];
 export function isContainer(source: Source) {
-  return source.kind === "dockerhub" || source.kind === "quay";
+  return (CONTAINER_KINDS as readonly string[]).includes(source.kind);
 }
 export function supports(source: Source, operation: Operation) {
   return (
     (isContainer(source) ? CONTAINER_OPERATIONS : PACKAGE_OPERATIONS).includes(operation) &&
-    !(source.kind === "nixpkgs" && operation === "dependencies")
+    !(source.kind === "nixpkgs" && operation === "dependencies") &&
+    !(source.kind === "ghcr" && operation === "search" && !source.options?.owner) &&
+    !(source.kind === "gitlab" && ["search", "repository"].includes(operation) && !source.options?.project)
   );
 }
 export function sourcesRows(settings: Settings, container: boolean): Row[] {
@@ -60,12 +64,22 @@ export function capabilityRows(settings: Settings, container: boolean): Row[] {
         supported: supports(s, operation),
         search_mode: operation === "search" ? (INDEXED.has(s.kind) ? "indexed" : "native") : null,
         searched_fields:
-          operation === "search" ? (["go", "pypi"].includes(s.kind) ? "name" : "name,description") : null,
+          operation === "search"
+            ? ["go", "pypi", "pub", "ghcr", "gitlab"].includes(s.kind)
+              ? "name"
+              : "name,description"
+            : null,
         authentication: s.auth?.mode ?? "auto",
         description:
           s.kind === "nixpkgs" && operation === "dependencies"
             ? "Derivation dependencies are not advertised by this metadata export"
-            : "Metadata over the configured source boundaries; see source_status for indexed coverage",
+            : s.kind === "ghcr"
+              ? "Search filters the configured options.owner inventory; owner_type is org or user. Known images support OCI inspection. API credentials may be required."
+              : s.kind === "gitlab"
+                ? "Search and repository metadata require options.project (ID or path); search filters that project's inventory. Known images support OCI inspection."
+                : s.kind === "vcpkg"
+                  ? "Version is upstream#port-revision. Version inventory includes history; dependency declarations describe only the pinned snapshot's current ports."
+                  : "Metadata over the configured source boundaries; see source_status for indexed coverage",
       })),
     );
 }
@@ -133,7 +147,7 @@ export async function queryPage(
     throw new RegistryError("ARGUMENT", "An exact version is required");
   const http = new Http(source, settings.limits, budget, secrets, signal);
   http.remaining();
-  if (INDEXED.has(source.kind) && (q.operation === "search" || !["pypi", "go"].includes(source.kind)))
+  if (INDEXED.has(source.kind) && (q.operation === "search" || !["pypi", "go", "pub"].includes(source.kind)))
     return readIndex(settings, source, q, secrets);
   switch (source.kind) {
     case "npm":
@@ -150,8 +164,16 @@ export async function queryPage(
       return rubygems(http, q);
     case "go":
       return goModules(http, q);
+    case "packagist":
+      return packagist(http, q);
+    case "pub":
+      return pub(http, q);
+    case "hex":
+      return hex(http, q);
     case "dockerhub":
     case "quay":
+    case "ghcr":
+    case "gitlab":
       return containers(http, q);
     default:
       throw new RegistryError("UNSUPPORTED", "No live operation for this source");

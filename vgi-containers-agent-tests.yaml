@@ -1,4 +1,6 @@
 tasks:
+  - name: containers_scoped_discovery
+    reference_sql: "SELECT source_id, supported FROM containers.main.capabilities() WHERE source_id IN ('ghcr_public','gitlab_public') AND operation='search' ORDER BY source_id"
   - name: containers_sources
     reference_sql: "SELECT source_id, ecosystem, authentication, search_mode FROM containers.main.sources() ORDER BY source_id"
   - name: containers_capabilities

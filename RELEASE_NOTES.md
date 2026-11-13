@@ -1,15 +1,14 @@
-Initial release of the TypeScript VGI software package and container workers.
+Adds Packagist, pub.dev, Hex, CRAN, Bioconductor and vcpkg to the TypeScript package worker, plus GHCR and GitLab to the container worker. Homebrew casks now have a default source alongside formulae.
 
-- `vgi-packages-worker` searches npm, PyPI, crates.io, Maven Central, NuGet, RubyGems, Go modules, Conda, Homebrew, Debian/APT, RPM repositories, Alpine and pinned nixpkgs metadata.
-- `vgi-containers-worker` searches Docker Hub and Quay and inspects OCI tags, manifests, platforms, layer descriptors and image configurations.
-- `vgi-software-index` prepares and inspects scoped SQLite snapshots for indexed sources.
-- Optional source-scoped authentication supports SQL secrets, environment variables and credential files, with separate API and registry credentials.
-- Typed SQL discovery, bounded requests, pagination, checksum validation, credential-isolated caches and explicit index coverage are included.
+- 19 package ecosystems and four container registry providers, with 24 default sources.
+- vcpkg: pinned public registry, version/port-revision history, baselines, features, host/target declarations, and local Git/filesystem imports. Recipe metadata is indexed without executing builds. Historical dependency inspection requires preparing that historical snapshot.
+- CRAN and Bioconductor: current repository package indexes, archive metadata and native R dependency classes. The Bioconductor preset pins release 3.23's software component.
+- pub.dev: complete package-name inventory plus live Hosted Pub v2 metadata. Packagist and Hex use their native search and release APIs.
+- GHCR and GitLab: name search within a configured owner/project, plus tags, manifests, platforms, layers and configurations for known images. GHCR inventory calls require API authentication; public OCI reads can remain anonymous.
+- Optional source-scoped authentication continues to support SQL secrets and environment/file references, with separate API and OCI credentials.
 
-Download the archive for each program you need and your platform: Linux x86-64, Linux arm64, macOS arm64 or Windows x86-64. Executables include the Bun runtime. Archives have SHA256 checksums, Sigstore bundles and GitHub build-provenance attestations.
+Download each program needed for Linux x86-64, Linux arm64, macOS arm64 or Windows x86-64. The three standalone programs are `vgi-packages-worker`, `vgi-containers-worker` and `vgi-software-index`. Archives include checksums, signatures and build-provenance attestations.
 
-Indexed sources require preparation. Nix evaluation needs Nix or an imported pinned JSON export. Alpine v3 ADB decoding needs compatible apk-tools or an imported JSON export. XZ/bzip2 indexes require those decompression tools. Dependencies retain native declarations; package installation, dependency solving and image layer downloads are outside this release.
+Prepare indexed sources before searching. See README.md for source configuration and coverage boundaries, and VALIDATION.md for test evidence. Existing SQL function signatures remain compatible.
 
-Validation includes strict TypeScript/Biome checks, 38 unit/transport tests, real SQL on Haybarn 2.0.0rc11 over stdio/Unix sockets/HTTP, stock DuckDB 2.0.0, standalone artifact tests, and both workers' VGI metadata checks. See README.md for setup and VALIDATION.md for the verification record.
-
-Both workers also passed L3 AI-assisted metadata lint with no errors or warnings; all 22 analyst tasks passed. Hosted CI passed on Linux and Windows, including Docker startup and standalone artifact SQL checks.
+Validation: 55 unit/transport tests, 54 production SQL assertions per transport, stock DuckDB and standalone-binary checks, live upstream smoke tests, and L3 metadata lint for both workers. All 25 analyst tasks passed with no lint errors or warnings.

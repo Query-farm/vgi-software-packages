@@ -2,6 +2,10 @@
 # `vgi-lint lint --ai` runs an agent on each prompt and grades it with check_sql.
 # See https://github.com/Query-farm/vgi-lint-check (VGI920).
 tasks:
+  - name: packages_new_sources
+    reference_sql: "SELECT source_id, ecosystem, search_mode FROM packages.main.sources() WHERE ecosystem IN ('packagist','pub','hex','cran','bioconductor','vcpkg') ORDER BY source_id"
+  - name: packages_composer_dependencies
+    reference_sql: "SELECT dependency, requirement FROM packages.main.dependencies('packagist_public','monolog/monolog','3.9.0') WHERE kind='require' ORDER BY dependency"
   - name: formal_greeting
     reference_sql: SELECT packages.main.greet('Grace', 'formal') AS greeting
   - name: sum_of_squares

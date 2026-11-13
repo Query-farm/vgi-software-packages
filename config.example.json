@@ -39,10 +39,31 @@
       "options": { "suite": "bookworm", "component": "main", "architecture": "amd64" }
     },
     {
-      "id": "homebrew_casks",
-      "kind": "homebrew",
-      "url": "https://formulae.brew.sh",
-      "options": { "type": "cask" }
+      "id": "ghcr_org",
+      "kind": "ghcr",
+      "url": "https://api.github.com",
+      "registry_url": "https://ghcr.io",
+      "options": { "owner": "YOUR_ORGANIZATION", "owner_type": "org" },
+      "auth": { "scheme": "bearer", "token_env": "GHCR_API_TOKEN" },
+      "registry_auth": { "scheme": "basic", "username": "YOUR_USERNAME", "password_env": "GHCR_PULL_TOKEN" },
+      "allowed_origins": ["https://pkg-containers.githubusercontent.com"]
+    },
+    {
+      "id": "gitlab_project",
+      "kind": "gitlab",
+      "url": "https://gitlab.com/api/v4",
+      "registry_url": "https://registry.gitlab.com",
+      "options": { "project": "gitlab-org/cluster-integration/auto-build-image" },
+      "registry_auth": { "origins": ["https://gitlab.com"] },
+      "allowed_origins": ["https://cdn.registry.gitlab-static.net"]
+    },
+    {
+      "id": "hex_private",
+      "kind": "hex",
+      "url": "https://hex.pm",
+      "registry_url": "https://repo.hex.pm",
+      "options": { "repository": "YOUR_REPOSITORY" },
+      "auth": { "mode": "required", "scheme": "token", "token_env": "HEX_API_KEY" }
     },
     {
       "id": "nixpkgs_public",

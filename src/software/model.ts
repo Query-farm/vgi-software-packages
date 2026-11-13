@@ -27,9 +27,29 @@ export const PACKAGE_KINDS = [
   "rpm",
   "alpine",
   "nixpkgs",
+  "packagist",
+  "pub",
+  "hex",
+  "cran",
+  "bioconductor",
+  "vcpkg",
 ] as const;
-export type Kind = (typeof PACKAGE_KINDS)[number] | "dockerhub" | "quay";
-export const INDEXED = new Set<Kind>(["pypi", "go", "conda", "homebrew", "apt", "rpm", "alpine", "nixpkgs"]);
+export const CONTAINER_KINDS = ["dockerhub", "quay", "ghcr", "gitlab"] as const;
+export type Kind = (typeof PACKAGE_KINDS)[number] | (typeof CONTAINER_KINDS)[number];
+export const INDEXED = new Set<Kind>([
+  "pypi",
+  "go",
+  "conda",
+  "homebrew",
+  "apt",
+  "rpm",
+  "alpine",
+  "nixpkgs",
+  "pub",
+  "cran",
+  "bioconductor",
+  "vcpkg",
+]);
 export interface Auth {
   mode?: "anonymous" | "auto" | "required";
   scheme?: "bearer" | "basic" | "token";

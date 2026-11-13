@@ -148,7 +148,7 @@ export class Http {
     const registry = options.registry ?? false;
     const headers: Record<string, string> = {
       Accept: "application/json",
-      "User-Agent": "vgi-software-packages/0.1.0 (https://query.farm)",
+      "User-Agent": "vgi-software-packages/0.2.0 (https://github.com/Query-farm/vgi-software-packages)",
       ...options.headers,
     };
     const auth = options.authOverride ?? this.authFor(url, registry);

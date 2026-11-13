@@ -5,6 +5,8 @@ import { gzipSync } from "node:zlib";
 import { digest, Http } from "../../src/software/http.ts";
 import { prepareIndex } from "../../src/software/indexes.ts";
 import type { Settings, Source } from "../../src/software/model.ts";
+import { INDEXED } from "../../src/software/model.ts";
+import { additionalResponse, additionalSources } from "./additional_fixture.ts";
 
 export const NIX_REVISION = "1234567890123456789012345678901234567890";
 export const APT =
@@ -125,6 +127,8 @@ export async function fixture() {
         path = decodeURIComponent(url.pathname),
         origin = url.origin;
       requests.push({ path: url.pathname + url.search, authorization: request.headers.get("authorization") });
+      const additional = additionalResponse(request, tar);
+      if (additional) return additional;
       const response = (value: unknown, headers: Record<string, string> = {}) => Response.json(value, { headers });
       if (path === "/slow") return Bun.sleep(100).then(() => response({ ok: true }));
       if (path === "/flaky")
@@ -311,6 +315,7 @@ export async function fixture() {
   });
   const origin = `http://127.0.0.1:${server.port}`;
   const sources: Source[] = [
+    ...additionalSources(origin),
     ...["npm", "pypi", "crates", "maven", "rubygems", "conda", "homebrew", "apt", "rpm", "alpine"].map((kind) => ({
       id: `${kind}_test`,
       kind: kind as Source["kind"],
@@ -342,9 +347,7 @@ export async function fixture() {
   writeFileSync(configPath, JSON.stringify(settings));
   const nixPath = join(directory, "nix.json");
   writeFileSync(nixPath, JSON.stringify(NIX));
-  for (const source of sources.filter((s) =>
-    ["pypi", "go", "conda", "homebrew", "apt", "rpm", "alpine", "nixpkgs"].includes(s.kind),
-  ))
+  for (const source of sources.filter((s) => INDEXED.has(s.kind)))
     await prepareIndex(settings, new Http(source, settings.limits), source.kind === "nixpkgs" ? nixPath : undefined);
   return {
     settings,

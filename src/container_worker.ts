@@ -7,7 +7,10 @@ const functions = softwareFunctions(true);
 for (const fn of functions)
   fn.meta.tags = { ...fn.meta.tags, "vgi.example_queries": JSON.stringify(fn.meta.examples ?? []) };
 const doc =
-  "Search Docker Hub and Quay repositories from SQL and inspect OCI tags, verified manifests, platforms, layers and image configurations. Optional source-scoped credentials support private reads. Configure source endpoints, request budgets and credential references with VGI_SOFTWARE_CONFIG. Layer payloads are never downloaded. Use sources(), capabilities(), and source_status() for discovery.";
+  "Search Docker Hub and Quay repositories, configured GHCR owner inventories, and configured GitLab project inventories from SQL. Inspect OCI tags, verified manifests, platforms, layers and image configurations on all four providers. GHCR search requires options.owner (and owner_type org or user); GitLab search and repository metadata require options.project. GHCR inventory API calls require API authentication even when public image inspection is anonymous. Optional source-scoped credentials support private reads; API and OCI registry credentials can differ. Configure endpoints, budgets and credential references with VGI_SOFTWARE_CONFIG. Layer payloads are never downloaded. Use sources(), capabilities(), and source_status() for discovery. " +
+  "Results preserve native namespace/repository identities as `VARCHAR` and include the configured source ID and ecosystem. Optional provider summaries and star/pull counts (`BIGINT`) may be NULL; absence is not a zero count. Image manifests are verified by SHA256. A multi-platform index holds descriptors with digest, operating system, architecture and variant; choose a platform descriptor before requesting layer or configuration details. Layer positions and declared sizes are `BIGINT`; configuration exposes the operating system, architecture and verified configuration digest. Native details remain sanitized JSON text in metadata. " +
+  "Read configured source capabilities before choosing a provider. SQL calls require nonempty search text or repository names. Row limits are from 1 through 10000; repository searches require an explicit limit, while other reads default to 1000 via a named max_results argument. Missing optional upstream fields remain SQL NULL. API requests also have independent byte, request and elapsed-time budgets. No function installs packages, executes image commands or downloads layer payloads. Private reads use source-scoped software_registry secrets or configured environment/file references; secrets are not returned in metadata.";
+
 export const CONTAINER_CATALOG: CatalogDescriptor = {
   name: "containers",
   comment: doc,
@@ -16,7 +19,7 @@ export const CONTAINER_CATALOG: CatalogDescriptor = {
   tags: {
     ...CATALOG_TAGS,
     "vgi.title": "VGI Container Registry Worker",
-    "vgi.subtitle": "Search Docker Hub and Quay and inspect OCI image metadata with optional authentication.",
+    "vgi.subtitle": "Discover Docker Hub, Quay, GHCR and GitLab containers and inspect OCI metadata.",
     "vgi.doc_llm": doc,
     "vgi.doc_md":
       "## Container registry metadata\n\n" +
@@ -24,6 +27,11 @@ export const CONTAINER_CATALOG: CatalogDescriptor = {
       "\n\n### Immutable references\n\nResolve tags with manifest, inspect platforms, and select a platform digest before reading layers or configuration. Search coverage is determined by each provider and account permissions.",
     "vgi.keywords": JSON.stringify(["docker", "quay", "oci", "containers", "image search", "authentication"]),
     "vgi.agent_test_tasks": JSON.stringify([
+      {
+        name: "containers_scoped_discovery",
+        prompt:
+          "Using the containers worker, show whether search is supported for the default ghcr_public and gitlab_public sources. Return exactly source_id, supported, ordered by source_id.",
+      },
       {
         name: "containers_sources",
         prompt:

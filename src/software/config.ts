@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { PACKAGE_KINDS, RegistryError, type Settings, type Source } from "./model.ts";
+import { CONTAINER_KINDS, PACKAGE_KINDS, RegistryError, type Settings, type Source } from "./model.ts";
 
 export const DEFAULT_SOURCES: Source[] = [
   { id: "npm_public", kind: "npm", url: "https://registry.npmjs.org" },
@@ -39,6 +39,31 @@ export const DEFAULT_SOURCES: Source[] = [
     options: { subdir: "linux-64", channel: "conda-forge" },
   },
   { id: "homebrew_public", kind: "homebrew", url: "https://formulae.brew.sh", options: { type: "formula" } },
+  { id: "homebrew_casks", kind: "homebrew", url: "https://formulae.brew.sh", options: { type: "cask" } },
+  { id: "packagist_public", kind: "packagist", url: "https://packagist.org" },
+  { id: "pub_public", kind: "pub", url: "https://pub.dev" },
+  {
+    id: "hex_public",
+    kind: "hex",
+    url: "https://hex.pm",
+    registry_url: "https://repo.hex.pm",
+    auth: { scheme: "token" },
+  },
+  { id: "cran_public", kind: "cran", url: "https://cran.r-project.org/src/contrib" },
+  {
+    id: "bioconductor_public",
+    kind: "bioconductor",
+    url: "https://bioconductor.org/packages/3.23/bioc/src/contrib",
+    options: { release: "3.23", component: "bioc" },
+    allowed_origins: ["https://bioconductor.posit.co", "https://mghp.osn.xsede.org"],
+  },
+  {
+    id: "vcpkg_public",
+    kind: "vcpkg",
+    url: "https://github.com/microsoft/vcpkg",
+    options: { revision: "fe8e78fac7df2793f9848ed0d27aa59d9c035998" },
+    allowed_origins: ["https://codeload.github.com"],
+  },
   {
     id: "apt_public",
     kind: "apt",
@@ -84,6 +109,21 @@ export const DEFAULT_SOURCES: Source[] = [
     registry_url: "https://quay.io",
     allowed_origins: ["https://cdn01.quay.io", "https://cdn02.quay.io", "https://cdn03.quay.io"],
   },
+  {
+    id: "ghcr_public",
+    kind: "ghcr",
+    url: "https://api.github.com",
+    registry_url: "https://ghcr.io",
+    allowed_origins: ["https://pkg-containers.githubusercontent.com"],
+  },
+  {
+    id: "gitlab_public",
+    kind: "gitlab",
+    url: "https://gitlab.com/api/v4",
+    registry_url: "https://registry.gitlab.com",
+    registry_auth: { origins: ["https://gitlab.com"] },
+    allowed_origins: ["https://cdn.registry.gitlab-static.net"],
+  },
 ];
 
 export function loadSettings(filename = process.env.VGI_SOFTWARE_CONFIG): Settings {
@@ -99,7 +139,7 @@ export function loadSettings(filename = process.env.VGI_SOFTWARE_CONFIG): Settin
     if (!/^[a-zA-Z0-9_-]+$/.test(source.id) || ids.has(source.id))
       throw new RegistryError("CONFIG", "Source IDs must be unique identifiers");
     ids.add(source.id);
-    if (![...PACKAGE_KINDS, "dockerhub", "quay"].includes(source.kind))
+    if (![...PACKAGE_KINDS, ...CONTAINER_KINDS].includes(source.kind))
       throw new RegistryError("CONFIG", `Unknown ecosystem for ${source.id}`);
     for (const value of [source.url, source.index_url, source.registry_url, ...(source.allowed_origins ?? [])].filter(
       Boolean,

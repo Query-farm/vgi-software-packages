@@ -57,17 +57,28 @@ with tempfile.TemporaryDirectory(prefix="vgi-sql-repositories-") as directory:
                 raise AssertionError(f"Expected {message}: {sql}")
             checks.append(sql)
 
-        check("SELECT count(*) FROM packages.main.sources", [(14,)])
-        check("SELECT count(*) FROM containers.main.sources", [(2,)])
-        check("SELECT count(*) FROM packages.main.source_status WHERE search_mode='indexed' AND ready AND complete", [(8,)])
+        check("SELECT count(*) FROM packages.main.sources", [(21,)])
+        check("SELECT count(*) FROM containers.main.sources", [(4,)])
+        check("SELECT count(*) FROM packages.main.source_status WHERE search_mode='indexed' AND ready AND complete", [(13,)])
         check("SELECT count(*) FROM packages.main.versions('npm_test','demo')", [(600,)])
         check("SELECT count(*) FROM packages.main.search('npm_test','demo',300)", [(300,)])
         check("SELECT count(*) FROM packages.main.search('npm_test','absent',25)", [(0,)])
         check("SELECT size, yanked FROM packages.main.artifacts('pypi_test','demo','1.0')", [(42,True)])
-        for kind in ["npm","pypi","crates","maven","nuget","rubygems","go","conda","homebrew","apt","rpm","alpine","nixpkgs","dockerhub","quay"]:
-            catalog = "containers" if kind in ("dockerhub","quay") else "packages"
+        for kind in ["npm","pypi","crates","maven","nuget","rubygems","go","conda","homebrew","apt","rpm","alpine","nixpkgs","packagist","pub","hex","cran","bioconductor","vcpkg","homebrew_casks","dockerhub","quay","ghcr","gitlab"]:
+            catalog = "containers" if kind in ("dockerhub","quay","ghcr","gitlab") else "packages"
             check(f"SELECT count(*) BETWEEN 1 AND 25 FROM {catalog}.main.search('{kind}_test','demo',25)", [(True,)])
         digest = os.environ["VGI_FIXTURE_DIGEST"]
+        check("SELECT dependency, requirement FROM packages.main.dependencies('packagist_test','vendor/demo','1.0') WHERE kind='require' ORDER BY dependency", [('php','>=8.1'),('vendor/helper','^2')])
+        check("SELECT version, yanked FROM packages.main.versions('pub_test','demo')", [('1.0',True)])
+        check("SELECT dependency, kind FROM packages.main.dependencies('hex_test','demo','1.0')", [('helper','optional')])
+        check("SELECT dependency, kind FROM packages.main.dependencies('bioconductor_test','demo','1.0') WHERE dependency='R'", [('R','Depends')])
+        check("SELECT version, build FROM packages.main.versions('vcpkg_test','demo') ORDER BY version", [('1.0#2','2'),('old','0')])
+        check("SELECT dependency FROM packages.main.dependencies('vcpkg_test','demo','1.0#2') WHERE kind='host'", [('vcpkg-cmake',)])
+        fails("SELECT * FROM packages.main.dependencies('vcpkg_test','demo','old')", "VERSION_SCOPE")
+        check("SELECT artifact_type FROM packages.main.artifacts('homebrew_casks_test','demo-app','1.0')", [('cask',)])
+        for provider in ('ghcr','gitlab'):
+            check(f"SELECT name FROM containers.main.repository('{provider}_test','example/demo')", [('example/demo',)])
+            check(f"SELECT os, architecture FROM containers.main.configuration('{provider}_test','example/demo',{literal(digest)})", [('linux','amd64')])
         check("SELECT digest FROM containers.main.platforms('dockerhub_test','library/demo','latest')", [(digest,)])
         check(f"SELECT position, size FROM containers.main.layers('quay_test','example/demo',{literal(digest)})", [(0,42)])
         check(f"SELECT os, architecture FROM containers.main.configuration('quay_test','example/demo',{literal(digest)})", [('linux','amd64')])

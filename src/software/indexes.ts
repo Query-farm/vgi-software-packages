@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { gunzipSync } from "node:zlib";
+import { rRecords, vcpkgFiles, vcpkgRecords } from "./additional_indexes.ts";
 import { authScope, digest, type Http, type Secrets, safeUrl, sanitize } from "./http.ts";
 import { parseXml } from "./maven_nuget.ts";
 import {
@@ -103,6 +104,7 @@ export function writeIndex(
   }
 }
 export function readIndex(settings: Settings, source: Source, q: Query, secrets: Secrets = {}): Page {
+  if (source.kind === "vcpkg" && q.version.endsWith("#0")) q = { ...q, version: q.version.slice(0, -2) };
   const path = indexPath(settings, source, secrets);
   if (!existsSync(path))
     throw new RegistryError(
@@ -114,6 +116,15 @@ export function readIndex(settings: Settings, source: Source, q: Query, secrets:
     db.exec("BEGIN");
     const entry = db.query<{ value: string }, []>("SELECT value FROM metadata WHERE key='info'").get();
     if (!entry) throw new RegistryError("INDEX_NOT_READY", `No committed snapshot for ${source.id}`);
+    if (
+      source.kind === "vcpkg" &&
+      q.operation === "dependencies" &&
+      !db.query("SELECT 1 FROM records WHERE relation='package' AND name=? AND version=?").get(q.name, q.version)
+    )
+      throw new RegistryError(
+        "VERSION_SCOPE",
+        "vcpkg dependencies describe the current registry snapshot; prepare the historical commit to inspect its declarations",
+      );
     const info = JSON.parse(entry.value) as IndexInfo;
     const cursor = q.cursor
       ? (JSON.parse(q.cursor) as { snapshot: string; offset: number })
@@ -151,7 +162,7 @@ export function readIndex(settings: Settings, source: Source, q: Query, secrets:
     db.close();
   }
 }
-function* packageRecords(row: Row): Generator<IndexedRecord> {
+export function* packageRecords(row: Row): Generator<IndexedRecord> {
   yield { relation: "package", row };
   if (row.version) yield { relation: "versions", row };
 }
@@ -560,7 +571,33 @@ export async function prepareIndex(settings: Settings, http: Http, input?: strin
     input ? new Uint8Array(readFileSync(input)) : (await http.request(url)).body;
   const readJson = async (url: string, headers?: Record<string, string>) =>
     input ? (JSON.parse(readFileSync(input, "utf8")) as unknown) : http.json(url, headers);
-  if (s.kind === "pypi") {
+  if (s.kind === "pub") {
+    fields = "name";
+    const names: IndexedRecord[] = [],
+      seen = new Set<string>();
+    let url = s.index_url ?? `${root}/api/package-names`;
+    do {
+      if (seen.has(url)) throw new RegistryError("PAGINATION", "Pub inventory cursor did not advance");
+      seen.add(url);
+      const data = obj(await readJson(url));
+      if (!Array.isArray(data.packages)) throw new RegistryError("MALFORMED", "Pub inventory has no packages array");
+      for (const name of data.packages) names.push({ relation: "package", row: baseRow(s, str(name)) });
+      url = str(data.nextUrl);
+      if (input && url)
+        throw new RegistryError("INCOMPLETE_INPUT", "Imported pub inventory must contain all names and no nextUrl");
+    } while (url);
+    records = names;
+  } else if (s.kind === "cran" || s.kind === "bioconductor") {
+    const url = s.index_url ?? `${root}/PACKAGES.gz`,
+      bytes = await readBytes(url);
+    const data = decoder.decode(await decompress(bytes, input ?? url, settings.limits.bytes));
+    revision = digest(bytes);
+    records = rRecords(s, data);
+  } else if (s.kind === "vcpkg") {
+    const files = await vcpkgFiles(http, input);
+    revision ||= digest(json([...files]));
+    records = vcpkgRecords(s, files);
+  } else if (s.kind === "pypi") {
     const data = obj(
       await readJson(s.index_url ?? `${root}/simple/`, { Accept: "application/vnd.pypi.simple.v1+json" }),
     );

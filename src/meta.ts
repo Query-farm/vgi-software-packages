@@ -13,7 +13,7 @@
 import { field, type VgiDataType, type VgiField } from "@query-farm/vgi";
 
 export const CATALOG_NAME = "packages";
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.0";
 
 export const SOURCE_URL = "https://github.com/Query-farm/vgi-software-packages";
 
@@ -61,8 +61,13 @@ export function column(name: string, type: VgiDataType, comment: string, nullabl
   return field(name, type, nullable, new Map([["comment", comment]]));
 }
 
+const PACKAGE_SQL_SURFACE =
+  "All objects are in schema main. The sources table lists configured source_id, ecosystem, endpoint and search_mode (`VARCHAR`), plus credential_configured (`BOOLEAN`). The capabilities table lists source_id and operation (`VARCHAR`), supported (`BOOLEAN`), searched_fields and scope descriptions. The source_status table reports ready/complete/stale (`BOOLEAN`), records (`BIGINT`), and snapshot/revision identifiers (`VARCHAR`); native-source readiness does not perform a network probe. These three tables also have zero-argument table-function forms. " +
+  "search(source_id `VARCHAR`, query `VARCHAR`, max_results `BIGINT`) returns native name, version and description (`VARCHAR`), nullable provider score (`DOUBLE`), and indexed coverage. package(source_id `VARCHAR`, package_name `VARCHAR`) returns name, version, homepage, repository and license (`VARCHAR`). versions(source_id `VARCHAR`, package_name `VARCHAR`) returns native version and published_at (`VARCHAR`), plus nullable yanked (`BOOLEAN`). artifacts(source_id `VARCHAR`, package_name `VARCHAR`, version `VARCHAR`) returns filename, url, hashes JSON text, artifact_type (`VARCHAR`) and nullable size (`BIGINT`). dependencies(source_id `VARCHAR`, package_name `VARCHAR`, version `VARCHAR`) returns dependency, requirement, kind, condition and declaration_context (`VARCHAR`). All package result sets include source_id, ecosystem and observation time; metadata is nullable sanitized JSON text. " +
+  "All query functions are table functions with positional source/name/query/version inputs. Search requires an explicit positional max_results; the other query functions accept named max_results with default 1000. Limits must be 1 through 10000. Empty search strings and empty package names are rejected. Artifact and dependency queries require an exact native version from versions(). Missing upstream metadata remains SQL NULL. Result row order is not a version ordering; use explicit ORDER BY for deterministic presentation.";
 export const CATALOG_DOC_LLM =
-  "Search 13 software package ecosystems from SQL: npm, PyPI, crates.io, Maven Central, NuGet, RubyGems, Go, Conda, Homebrew, APT, RPM, Alpine and pinned nixpkgs. Read native versions, artifacts and dependency declarations. Use sources, capabilities and source_status for discovery; prepare indexed sources using bin/vgi-software-index. Authentication is optional and source-scoped. Container images have a separate containers worker. Starter example functions remain available for compatibility.";
+  "Search 19 software package ecosystems from SQL: npm, PyPI, crates.io, Maven Central, NuGet, RubyGems, Go, Conda, Homebrew formulae and casks, APT, RPM, Alpine, pinned nixpkgs, Packagist, pub.dev, Hex, CRAN, Bioconductor and pinned vcpkg. Read native versions, artifacts and dependency declarations. Use sources, capabilities and source_status for discovery; prepare indexed sources using bin/vgi-software-index. vcpkg versions use upstream#port-revision (omit revision zero); its historical version inventory is available, but dependency declarations describe only the pinned snapshot's current ports. Authentication is optional and source-scoped. Container images have a separate containers worker. Starter example functions remain available for compatibility. " +
+  PACKAGE_SQL_SURFACE;
 export const CATALOG_DOC_MD =
   "## Software package metadata\n\n" +
   CATALOG_DOC_LLM +
@@ -75,6 +80,16 @@ export const SCHEMA_DOC_MD =
   "\n\n### Source boundaries\n\nSearch completeness refers to the configured channel, suite, architecture, revision or feed checkpoint. It does not imply coverage of an entire ecosystem. Use the metadata JSON column for native details that do not fit the shared columns.";
 
 export const AGENT_TEST_TASKS = [
+  {
+    name: "packages_new_sources",
+    prompt:
+      "Using the packages worker, list sources for the Packagist, pub, Hex, CRAN, Bioconductor and vcpkg ecosystems. Return exactly source_id, ecosystem, search_mode, ordered by source_id.",
+  },
+  {
+    name: "packages_composer_dependencies",
+    prompt:
+      "Using the packages worker, show the declared runtime requirements (kind require) for monolog/monolog version 3.9.0 from packagist_public. Return exactly dependency, requirement, ordered by dependency.",
+  },
   {
     name: "packages_sources",
     prompt:

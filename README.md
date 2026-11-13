@@ -1,9 +1,9 @@
 # VGI software package and container workers
 
-Two TypeScript workers expose package registries and OCI image metadata to SQL. Public sources work anonymously; private sources can use optional source-scoped credentials. A separate maintenance command prepares searchable repository snapshots.
+Two TypeScript workers expose package registries and OCI image metadata to SQL. Most public reads work anonymously; GHCR inventory metadata requires API credentials. Private sources can use optional source-scoped credentials. A separate maintenance command prepares searchable repository snapshots.
 
-- `bin/vgi-packages-worker`: npm, PyPI, crates.io, Maven Central, NuGet, RubyGems, Go modules, Conda, Homebrew, Debian/APT, RPM repositories, Alpine and nixpkgs.
-- `bin/vgi-containers-worker`: Docker Hub and Quay repository search, tags, manifests, platforms, layers and configuration.
+- `bin/vgi-packages-worker`: npm, PyPI, crates.io, Maven Central, NuGet, RubyGems, Go modules, Conda, Homebrew, Debian/APT, RPM repositories, Alpine, nixpkgs, Packagist, pub.dev, Hex, CRAN, Bioconductor and vcpkg.
+- `bin/vgi-containers-worker`: Docker Hub and Quay search, GHCR owner and GitLab project inventories, plus OCI tags, manifests, platforms, layers and configuration.
 - `bin/vgi-software-index`: prepare or inspect local SQLite indexes. Index maintenance is explicit; SQL searches never start a repository crawl.
 
 ## Run
@@ -71,19 +71,31 @@ The starter's `greet`, `sequence_table` and `fetch_items` examples remain in the
 | RubyGems | Native | Releases and platform variants; runtime/development requirements |
 | Go modules | Prepared name index | Incremental public feed or imported inventory; exact metadata from configured module proxy, raw go.mod require/replace/exclude declarations |
 | Conda | Prepared | Full repodata for one configured channel/subdir; `.conda` and `.tar.bz2`, builds, depends and constrains |
-| Homebrew | Prepared | Formula or cask JSON; bottles/platforms and declared requirements; choose separate sources for formulae and casks |
+| Homebrew | Prepared | Formula and cask JSON; bottles/platforms and declared requirements; defaults `homebrew_public` and `homebrew_casks` |
 | Debian/APT | Prepared | Release-selected Packages or Sources for one suite/component/architecture, SHA256 checks, alternative dependency groups |
 | RPM | Prepared | repomd-selected primary XML, compressed-index checksum checks, epoch/version/release, architectures and dependency capabilities |
 | Alpine | Prepared | v2 APKINDEX archive or v3 ADB export; architecture, native constraints and package hashes |
 | nixpkgs | Prepared | Pinned 40-hex Git revision and system; evaluated attributes, metadata, derivation/output paths; dependencies explicitly unsupported |
 | Docker Hub / Quay | Native | Provider search and repository metadata; OCI Distribution API for image inspection |
+| Packagist | Native | Packagist search and full package API; Composer versions, source/dist references, platform requirements and dependency categories |
+| pub.dev | Prepared name index | Complete paginated package-name feed; live Hosted Pub v2 versions, archives, retraction flags and pubspec dependencies |
+| Hex | Native | Package search/releases, checksums, retirement and optional requirements; private repositories via `options.repository` |
+| CRAN / Bioconductor | Prepared | CRAN-style `PACKAGES.gz` for one source repository; current versions, MD5 checksums and R dependency classes; Bioconductor default pins release 3.23 software (`bioc`) |
+| vcpkg | Prepared | Pinned registry archive or local directory; ports, version history, baselines, features, platform conditions and host/target dependencies |
+| GHCR | Scoped inventory | Name filtering within `options.owner`, with `owner_type: org` (default) or `user`; GitHub Packages API credentials required; known-image OCI inspection works without an owner setting |
+| GitLab | Scoped inventory | Name filtering and repository metadata within `options.project` (ID or path); known-image OCI inspection works without a project setting |
 
-Search order follows the native provider or local snapshot's deterministic name order. Provider scores are not comparable between registries. Index search is case-insensitive substring matching over the advertised fields. PyPI/Go search names only. A source's `complete` flag means its configured input has been exhausted, not that all packages in the ecosystem are covered. Homebrew/repository indexes represent currently published records rather than historical releases. Maven artifacts do not enumerate every classifier. NuGet package metadata selects the last registration entry; use versions for the release inventory. Private PyPI metadata requires a Warehouse-compatible JSON API in addition to a Simple index.
+Search order follows the native provider or local snapshot's deterministic name order. Provider scores are not comparable between registries. Index search is case-insensitive substring matching over the advertised fields. PyPI/Go/pub search names only. A source's `complete` flag means its configured input has been exhausted, not that all packages in the ecosystem are covered. Homebrew/R/distribution indexes represent currently published records rather than historical releases. Maven artifacts do not enumerate every classifier. NuGet package metadata selects the last registration entry; use versions for the release inventory. Private PyPI metadata requires a Warehouse-compatible JSON API in addition to a Simple index. Custom Packagist endpoints must implement the Packagist API; a generic Composer p2 repository alone is insufficient. Custom pub hosts need a compatible package-name inventory for search, or an imported complete inventory.
 
 ```sh
 bin/vgi-software-index prepare alpine_public
 bin/vgi-software-index status alpine_public
 bin/vgi-software-index prepare homebrew_public
+bin/vgi-software-index prepare homebrew_casks
+bin/vgi-software-index prepare pub_public
+bin/vgi-software-index prepare cran_public
+bin/vgi-software-index prepare bioconductor_public
+bin/vgi-software-index prepare vcpkg_public
 # Go consumes one 2,000-event page per invocation, committing its checkpoint.
 # Repeat prepare until complete=true; rerun later to discover newer events.
 bin/vgi-software-index prepare go_public
@@ -97,7 +109,15 @@ Snapshot replacement is transactional. Readers detect a changed snapshot between
 
 ## Configuration and optional authentication
 
-Set `VGI_SOFTWARE_CONFIG` to an absolute JSON file path **before starting the SQL engine or worker**. Without it, 15 public source presets are available; indexed sources still need preparation. See [config.example.json](config.example.json). `include_defaults: true` merges custom sources by ID. Otherwise, `sources` replaces the presets. Override a preset by using its existing ID. The cache defaults to `~/.cache/vgi-software`, overridable with `VGI_SOFTWARE_CACHE` or `cache_dir`.
+vcpkg's public preset pins `fe8e78fac7df2793f9848ed0d27aa59d9c035998`; override `options.revision` to another full Git commit to refresh it. `prepare vcpkg_public --input /path/to/registry` reads a local Git checkout or filesystem registry containing `ports/` and `versions/`. Authenticate a private checkout with your Git tooling before importing, or configure an HTTPS archive with `index_url` and scoped credentials. Local inputs' revision labels are supplied by the caller. The worker reads manifests and version databases without running CMake or installing packages. `versions()` includes historical records for ports present in the snapshot; `dependencies()` describes only their current manifest and returns `VERSION_SCOPE` for older versions. Use `upstream#port-revision` as the exact version; revision zero is omitted, matching vcpkg notation. An explicit `#0` is also accepted. Artifacts describe recipes and Git tree identities, not a binary cache.
+
+For a filesystem registry with version paths, set `options.format: "filesystem"` and optionally `options.baseline` (default `default`), then import its root directory. Version paths must use `$/` and remain inside that directory. These imports derive a content-hash revision; no Git commit is required.
+
+CRAN and Bioconductor sources point directly at a `src/contrib` directory. To query Bioconductor annotation or experiment packages, configure separate sources for those components and preserve `options.release` and `options.component`. Package descriptions may be absent from native `PACKAGES` indexes; missing fields remain NULL. R archive inventories are outside the prepared snapshot. Pub imports use `{"packages":["name", ...],"nextUrl":null}` and must contain a complete supplied inventory.
+
+GHCR and GitLab do not expose global keyword search through these adapters. Configure a GHCR owner or GitLab project, then `search()` filters names across that inventory's pages. Default unscoped sources advertise search as unsupported while allowing tags/manifests for known image names. For GHCR discovery, use a GitHub token with package-read access; OCI pulls may use a separate Basic username/token credential. GitLab private API reads use a Bearer token; private OCI reads can use Basic credentials with the token-service origin explicitly trusted. Examples are in `config.example.json`.
+
+Set `VGI_SOFTWARE_CONFIG` to an absolute JSON file path **before starting the SQL engine or worker**. Without it, 24 source presets are available; indexed sources still need preparation, and hosted-container discovery needs an explicit scope. See [config.example.json](config.example.json). `include_defaults: true` merges custom sources by ID. Otherwise, `sources` replaces the presets. Override a preset by using its existing ID. The cache defaults to `~/.cache/vgi-software`, overridable with `VGI_SOFTWARE_CACHE` or `cache_dir`.
 
 Each source has `id`, `kind`, `url`, optional `registry_url`, `index_url`, `allowed_origins`, `auth`, `registry_auth` and ecosystem-specific `options`. Options are string values. Common repository boundaries include `suite`, `component`, `architecture`, `subdir`, `channel`, `type`, `format`, `revision`, `system`, `since` and `index_ttl_seconds` (default 86400). `index_url` overrides the selected metadata location, which can bypass Release/repomd checksum discovery.
 
@@ -154,14 +174,17 @@ make check                 # formatting, types, unit/VGI tests, SQL on 3 transpo
 make test-duckdb            # stock DuckDB 2.0.0, VGI from query_farm
 make test-bundle            # compiled workers + index CLI, SQL outside the source tree
 bun run tests/software/live.ts  # optional public-service smoke tests; network dependent
+bun run tests/software/live_additional.ts # v0.2 upstream APIs and prepared indexes
 ```
 
-Deterministic fixtures cover all 15 adapters, native dependency conditions, more than one Arrow batch, empty results, pagination, source/credential cache isolation, retry/ETag/budgets, optional credentials, atomic snapshots and verified OCI descriptors. Production SQL tests use **Haybarn 2.0.0rc11** over stdio, launch and HTTP, plus a separate **stock DuckDB 2.0.0** run. SQL tests create/drop a source-scoped secret and verify access is withdrawn. `tests/software/verify_sql.py` contains the exact ATTACH and SELECT assertions.
+Deterministic fixtures cover all 23 adapters plus separate Homebrew casks, native dependency conditions, more than one Arrow batch, empty results, pagination, source/credential cache isolation, retry/ETag/budgets, optional credentials, atomic snapshots and verified OCI descriptors. Production SQL tests use **Haybarn 2.0.0rc11** over stdio, launch and HTTP, plus a separate **stock DuckDB 2.0.0** run. SQL tests create/drop a source-scoped secret and verify access is withdrawn. `tests/software/verify_sql.py` contains the exact ATTACH and SELECT assertions.
 
-Live smoke tests exercise all seven native package metadata adapters, both image registries, Alpine/Homebrew index preparation and image configuration retrieval. Nix evaluation and binary ADB decoding require their optional external tools; this environment tests their JSON export paths. The release workflow compiles all three programs; CI also runs production SQL and standalone-artifact verification. Release archives are available from https://github.com/Query-farm/vgi-software-packages/releases.
+Live smoke tests exercise the original package and container adapters plus the v0.2 APIs, full pub/CRAN/Bioconductor/vcpkg/cask preparation, GHCR anonymous image inspection and GitLab project discovery. GHCR inventory authentication is fixture-tested; the live inventory endpoint returns 401 without credentials. Nix evaluation and binary ADB decoding require their optional external tools; this environment tests their JSON export paths. The release workflow compiles all three programs; CI also runs production SQL and standalone-artifact verification. Release archives are available from https://github.com/Query-farm/vgi-software-packages/releases.
 
 Upstream protocol references: [PyPI Simple](https://packaging.python.org/en/latest/specifications/simple-repository-api/), [NuGet API](https://learn.microsoft.com/en-us/nuget/api/overview), [Go proxy](https://go.dev/ref/mod#goproxy-protocol), [OCI Distribution](https://github.com/opencontainers/distribution-spec/blob/main/spec.md), [Docker Hub API](https://docs.docker.com/reference/api/hub/latest/), [Quay API](https://docs.projectquay.io/api_reference.html), [Alpine ADB schema](https://github.com/alpinelinux/apk-tools/blob/master/src/apk_adb.c).
 
 ## Support
+
+Additional protocol references: [Packagist API](https://packagist.org/apidoc), [pub.dev API](https://pub.dev/help/api), [Hex endpoints](https://github.com/hexpm/specifications/blob/main/endpoints.md), [R package metadata](https://cran.r-project.org/doc/manuals/r-release/R-exts.html), [vcpkg registries](https://learn.microsoft.com/en-us/vcpkg/concepts/registries), [GitHub Packages API](https://docs.github.com/en/rest/packages/packages), [GitLab container API](https://docs.gitlab.com/api/container_registry/).
 
 Report reproducible worker defects through the repository issue tracker. Include the worker version, ecosystem, transport and a sanitized query. Do not include credentials or private package metadata. Upstream registry availability and access permissions remain controlled by each provider.

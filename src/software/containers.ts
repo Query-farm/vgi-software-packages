@@ -106,6 +106,8 @@ export async function manifest(http: Http, name: string, reference: string) {
 export async function containers(http: Http, q: Query): Promise<Page> {
   const s = http.source,
     root = s.url.replace(/\/$/, "");
+  if ((s.kind === "ghcr" || s.kind === "gitlab") && ["search", "repository"].includes(q.operation))
+    return hostedContainers(http, q);
   if (q.operation === "search") {
     const page = Number(q.cursor || 1);
     if (s.kind === "dockerhub") {
@@ -247,4 +249,77 @@ export async function containers(http: Http, q: Query): Promise<Page> {
   };
   if (q.operation === "configuration") row.metadata = json(config);
   return { rows: [row], next: "" };
+}
+
+async function hostedContainers(http: Http, q: Query): Promise<Page> {
+  const s = http.source,
+    root = s.url.replace(/\/$/, ""),
+    page = Number(q.cursor || 1);
+  if (!Number.isSafeInteger(page) || page < 1)
+    throw new RegistryError("INVALID_CURSOR", "Invalid registry inventory page");
+  if (s.kind === "ghcr") {
+    const name = q.operation === "repository" ? repositoryName(http, q.name) : "";
+    const owner = name ? name.split("/")[0] : s.options?.owner;
+    if (!owner) throw new RegistryError("CONFIG", "GHCR discovery requires options.owner");
+    const ownerType = s.options?.owner_type ?? "org";
+    if (!["org", "user"].includes(ownerType)) throw new RegistryError("CONFIG", "GHCR owner_type must be org or user");
+    const endpoint = `${root}/${ownerType === "org" ? "orgs" : "users"}/${encodeURIComponent(owner)}/packages`;
+    const headers = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
+    const result =
+      q.operation === "repository"
+        ? [
+            await http.object(
+              `${endpoint}/container/${encodeURIComponent(name.split("/").slice(1).join("/"))}`,
+              headers,
+            ),
+          ]
+        : await http.json(`${endpoint}?package_type=container&per_page=100&page=${page}`, headers);
+    if (!Array.isArray(result)) throw new RegistryError("MALFORMED", "Expected GitHub package inventory");
+    const rows = result
+      .map((value) => {
+        const p = obj(value);
+        return baseRow(s, `${owner.toLowerCase()}/${str(p.name)}`, {
+          url: nullable(p.html_url),
+          search_mode: "native",
+          metadata: json({
+            visibility: p.visibility,
+            owner,
+            owner_type: ownerType,
+            repository: obj(p.repository).full_name,
+            discovery_scope: "owner",
+          }),
+        });
+      })
+      .filter((row) => q.operation !== "search" || str(row.name).toLowerCase().includes(q.query.toLowerCase()))
+      .slice(0, q.limit);
+    return { rows, next: q.operation === "search" && result.length === 100 ? String(page + 1) : "" };
+  }
+  const project = s.options?.project;
+  if (!project) throw new RegistryError("CONFIG", "GitLab discovery requires options.project (ID or project path)");
+  const result = await http.json(
+    `${root}/projects/${encodeURIComponent(project)}/registry/repositories?per_page=100&page=${page}`,
+  );
+  if (!Array.isArray(result)) throw new RegistryError("MALFORMED", "Expected GitLab registry inventory");
+  const rows = result
+    .map((value) => {
+      const p = obj(value);
+      return baseRow(s, str(p.path), {
+        search_mode: "native",
+        url: nullable(p.location),
+        metadata: json({
+          repository_id: p.id,
+          project_id: p.project_id,
+          created_at: p.created_at,
+          discovery_scope: "project",
+        }),
+      });
+    })
+    .filter((row) =>
+      q.operation === "repository" ? row.name === q.name : str(row.name).toLowerCase().includes(q.query.toLowerCase()),
+    )
+    .slice(0, q.limit);
+  return {
+    rows,
+    next: result.length === 100 && !(q.operation === "repository" && rows.length) ? String(page + 1) : "",
+  };
 }

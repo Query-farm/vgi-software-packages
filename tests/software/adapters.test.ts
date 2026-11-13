@@ -96,7 +96,7 @@ test("native dependency distinctions survive normalization", async () => {
   expect((await rows("conda", "artifacts")).length).toBe(2);
 });
 test("source discovery advertises actual capabilities and index scope", () => {
-  expect(new Set(capabilityRows(f.settings, false).map((r) => r.ecosystem)).size).toBe(13);
+  expect(new Set(capabilityRows(f.settings, false).map((r) => r.ecosystem)).size).toBe(19);
   expect(
     capabilityRows(f.settings, false).find((r) => r.ecosystem === "nixpkgs" && r.operation === "dependencies")
       ?.supported,
