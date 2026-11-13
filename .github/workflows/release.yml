@@ -20,8 +20,35 @@ jobs:
     if: ${{ github.event_name != 'push' || !startsWith(github.repository, 'Query-farm/vgi-starter-') }}
     uses: ./.github/workflows/ci.yml
 
-  release:
+  prepare-release:
     needs: [ci]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: ci/check-version.sh "$GITHUB_REF_NAME"
+      - name: Prepare release once before parallel uploads
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+              --verify-tag --draft --title "$GITHUB_REF_NAME" --notes-file RELEASE_NOTES.md
+          fi
+
+  release:
+    needs: [prepare-release]
+    strategy:
+      matrix:
+        include:
+          - bin: vgi-packages-worker
+            entry: src/worker.ts
+          - bin: vgi-containers-worker
+            entry: src/container_worker.ts
+          - bin: vgi-software-index
+            entry: src/software/index_cli.ts
     permissions:
       contents: write        # create the release, attach assets
       id-token: write        # keyless signing + provenance
@@ -29,6 +56,20 @@ jobs:
     uses: Query-farm/vgi-actions/.github/workflows/ts-release.yml@v1
     secrets: inherit
     with:
-      bin: vgi-starter-worker
-      entry: src/worker.ts
+      bin: ${{ matrix.bin }}
+      asset_prefix: ${{ matrix.bin }}
+      entry: ${{ matrix.entry }}
       version_check_cmd: ci/check-version.sh
+      include: README.md,LICENSE,config.example.json
+
+  publish-release:
+    needs: [release]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish after all signed platform archives are uploaded
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest

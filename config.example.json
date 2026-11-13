@@ -1,0 +1,54 @@
+{
+  "include_defaults": true,
+  "limits": {
+    "requests": 100,
+    "bytes": 134217728,
+    "timeout_ms": 30000,
+    "retries": 3,
+    "cache_seconds": 60
+  },
+  "sources": [
+    {
+      "id": "npm_private",
+      "kind": "npm",
+      "url": "https://packages.example.org/npm",
+      "auth": {
+        "mode": "required",
+        "scheme": "bearer",
+        "token_env": "PRIVATE_NPM_TOKEN",
+        "paths": ["/npm"]
+      }
+    },
+    {
+      "id": "quay_private",
+      "kind": "quay",
+      "url": "https://quay.example.org",
+      "registry_url": "https://quay.example.org",
+      "auth": { "mode": "auto", "scheme": "bearer", "token_env": "QUAY_API_TOKEN" },
+      "registry_auth": {
+        "mode": "required",
+        "scheme": "basic",
+        "username": "organization+reader",
+        "password_env": "QUAY_ROBOT_TOKEN"
+      }
+    },
+    {
+      "id": "debian_bookworm_amd64",
+      "kind": "apt",
+      "url": "https://deb.debian.org/debian",
+      "options": { "suite": "bookworm", "component": "main", "architecture": "amd64" }
+    },
+    {
+      "id": "homebrew_casks",
+      "kind": "homebrew",
+      "url": "https://formulae.brew.sh",
+      "options": { "type": "cask" }
+    },
+    {
+      "id": "nixpkgs_public",
+      "kind": "nixpkgs",
+      "url": "https://github.com/NixOS/nixpkgs",
+      "options": { "revision": "REPLACE_WITH_A_40_CHARACTER_COMMIT", "system": "x86_64-linux" }
+    }
+  ]
+}

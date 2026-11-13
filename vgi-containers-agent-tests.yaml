@@ -1,0 +1,21 @@
+tasks:
+  - name: containers_sources
+    reference_sql: "SELECT * FROM containers.main.sources()"
+  - name: containers_capabilities
+    reference_sql: "SELECT * FROM containers.main.capabilities()"
+  - name: containers_source_status
+    reference_sql: "SELECT * FROM containers.main.source_status()"
+  - name: containers_search
+    reference_sql: "SELECT * FROM containers.main.search('dockerhub_public', 'postgres', 5)"
+  - name: containers_repository
+    reference_sql: "SELECT * FROM containers.main.repository('dockerhub_public', 'library/hello-world')"
+  - name: containers_tags
+    reference_sql: "SELECT * FROM containers.main.tags('dockerhub_public', 'library/hello-world')"
+  - name: containers_manifest
+    reference_sql: "SELECT * FROM containers.main.manifest('quay_public', 'prometheus/prometheus', 'sha256:89c1a644817e9ad70fa2af76c84898e327c1de7063735f962e8313b1e28672c3')"
+  - name: containers_platforms
+    reference_sql: "SELECT * FROM containers.main.platforms('quay_public', 'prometheus/prometheus', 'sha256:89c1a644817e9ad70fa2af76c84898e327c1de7063735f962e8313b1e28672c3')"
+  - name: containers_layers
+    reference_sql: "SELECT * FROM containers.main.layers('quay_public', 'prometheus/prometheus', 'sha256:89c1a644817e9ad70fa2af76c84898e327c1de7063735f962e8313b1e28672c3')"
+  - name: containers_configuration
+    reference_sql: "SELECT * FROM containers.main.configuration('quay_public', 'prometheus/prometheus', 'sha256:89c1a644817e9ad70fa2af76c84898e327c1de7063735f962e8313b1e28672c3')"

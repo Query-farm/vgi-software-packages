@@ -1,0 +1,3 @@
+#!/bin/sh
+here="$(cd "$(dirname "$0")" && pwd)"
+exec bun run "$here/../src/container_worker.ts" "$@"

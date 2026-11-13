@@ -10,8 +10,9 @@ import { API_SECRET_TYPE, fetchItems } from "./fetch_items.ts";
 import { greet, greetWithStyle } from "./greet.ts";
 import { CATALOG_DOC_MD, CATALOG_NAME, CATALOG_TAGS, SCHEMA_DOC_MD, SCHEMA_TAGS, SOURCE_URL } from "./meta.ts";
 import { sequenceTable } from "./sequence.ts";
+import { REGISTRY_SECRET, softwareFunctions, softwareTables } from "./software/functions.ts";
 
-export const FUNCTIONS: VgiFunction[] = [greet, greetWithStyle, sequenceTable, fetchItems];
+export const FUNCTIONS: VgiFunction[] = [greet, greetWithStyle, sequenceTable, fetchItems, ...softwareFunctions(false)];
 
 interface Example {
   description: string;
@@ -46,12 +47,13 @@ export const CATALOG: CatalogDescriptor = {
   comment: CATALOG_DOC_MD,
   sourceUrl: SOURCE_URL,
   tags: CATALOG_TAGS,
-  secretTypes: [API_SECRET_TYPE],
+  secretTypes: [API_SECRET_TYPE, REGISTRY_SECRET],
   schemas: [
     {
       path: ["main"],
       comment: SCHEMA_DOC_MD,
       functions: FUNCTIONS,
+      tables: softwareTables(FUNCTIONS),
       tags: { ...SCHEMA_TAGS, "vgi.example_queries": JSON.stringify(ALL_EXAMPLES) },
     },
   ],

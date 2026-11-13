@@ -1,319 +1,167 @@
-<!-- managed-by: vgi-starters (edit upstream in shared/README.md.tmpl, then run tools/render.py) -->
-<p align="center">
-  <img src="https://query.farm/media-kit/products/vgi/vgi-logo.png" alt="Vector Gateway Interface (VGI)" width="320">
-</p>
+# VGI software package and container workers
 
-<p align="center"><em>A Query.Farm VGI worker for DuckDB, written in TypeScript.</em></p>
+Two TypeScript workers expose package registries and OCI image metadata to SQL. Public sources work anonymously; private sources can use optional source-scoped credentials. A separate maintenance command prepares searchable repository snapshots.
 
-# VGI Starter Worker — TypeScript
+- `bin/vgi-packages-worker`: npm, PyPI, crates.io, Maven Central, NuGet, RubyGems, Go modules, Conda, Homebrew, Debian/APT, RPM repositories, Alpine and nixpkgs.
+- `bin/vgi-containers-worker`: Docker Hub and Quay repository search, tags, manifests, platforms, layers and configuration.
+- `bin/vgi-software-index`: prepare or inspect local SQLite indexes. Index maintenance is explicit; SQL searches never start a repository crawl.
 
-[![CI](https://github.com/Query-farm/vgi-starter-typescript/actions/workflows/ci.yml/badge.svg)](https://github.com/Query-farm/vgi-starter-typescript/actions/workflows/ci.yml)
-[![vgi worker: query.farm](https://query.farm/media-kit/shields/vgi-worker.svg)](https://query.farm)
+## Run
 
-[VGI](https://query.farm/vgi) lets DuckDB call functions that live in a separate
-process: your code, in any language, exposed as ordinary SQL. This worker adds
-three example functions that you rename and replace with your own:
+Install Bun 1.3 or later, then run `make build`. Development wrappers require Bun; `make bundle` produces three standalone executables in `dist/`. The compiled workers do not require Bun or Node at runtime. Some index formats need optional tools described below.
 
-| Function | Kind | Shows you how to |
-|---|---|---|
-| `greet(name)` / `greet(name, style)` | scalar | vectorize over a column, overload, constrain a constant |
-| `sequence_table(count, step := 1)` | table | stream rows in batches, take named arguments |
-| `fetch_items(base_url, page_size := 100)` | table | page through a REST API, retry, read a secret |
-
-<!-- template-only:start -->
-## Use this template
-
-This repository is a **template**. Click **Use this template** on GitHub, or:
-
-```bash
-gh repo create my-org/weather-worker --template Query-farm/vgi-starter-typescript --private --clone
-cd weather-worker
-make init NAME=weather     # renames catalog, package, binary, env vars; removes this section
-make check                 # lint + tests over every transport + metadata score
-```
-
-Prefer to work with an AI coding agent? `make init` first, then hand it
-[AGENTS.md](AGENTS.md). See [Using with coding agents](#using-with-coding-agents).
-
-Starters exist for [Python](https://github.com/Query-farm/vgi-starter-python),
-[TypeScript](https://github.com/Query-farm/vgi-starter-typescript),
-[Go](https://github.com/Query-farm/vgi-starter-go),
-[Rust](https://github.com/Query-farm/vgi-starter-rust),
-[Java](https://github.com/Query-farm/vgi-starter-java) and
-[C#](https://github.com/Query-farm/vgi-starter-csharp). They are generated from
-[Query-farm/vgi-starters](https://github.com/Query-farm/vgi-starters); send
-changes there.
-<!-- template-only:end -->
-
-## Quick start
-
-**Prerequisites:** [Bun](https://bun.sh) 1.3+ and [uv](https://docs.astral.sh/uv/) (it runs the SQL
-test runner and the metadata checker).
-
-```bash
-make build
-```
-
-Then open DuckDB 2.0 or [Haybarn](https://query.farm/products/haybarn) and attach the
-worker. `LOCATION` is the command DuckDB runs to start it; use an absolute path,
-because a relative one resolves against DuckDB's working directory.
-
-**DuckDB 2.0:**
+With stock DuckDB 2.0.0:
 
 ```sql
 SET allow_extension_repositories = 'allowed';
-CREATE EXTENSION REPOSITORY IF NOT EXISTS query_farm WITH PREFIX 'https://duckdb-extensions.query.farm';
+CREATE EXTENSION REPOSITORY query_farm
+  WITH PREFIX 'https://duckdb-extensions.query.farm';
 INSTALL vgi FROM query_farm;
 LOAD vgi FROM query_farm;
-ATTACH 'starter' (TYPE vgi, LOCATION '/abs/path/to/vgi-starter-typescript/bin/vgi-starter-worker');
+
+ATTACH 'packages' (TYPE vgi,
+  LOCATION '/absolute/path/to/vgi-packages-worker');
+ATTACH 'containers' (TYPE vgi,
+  LOCATION '/absolute/path/to/vgi-containers-worker');
+
+SELECT * FROM packages.main.sources;
+SELECT * FROM packages.main.capabilities;
+SELECT * FROM packages.main.source_status;
+SELECT name, version, description, score
+FROM packages.main.search('npm_public', 'typescript', 25);
+SELECT * FROM packages.main.dependencies('pypi_public', 'requests', '2.32.3');
+SELECT name, description, stars
+FROM containers.main.search('dockerhub_public', 'postgres', 25);
+SELECT digest, os, architecture
+FROM containers.main.platforms('quay_public', 'prometheus/prometheus', 'latest');
 ```
 
-**Haybarn 2.0** (`uvx haybarn-cli`):
+Replace the absolute paths for another installation. For the pinned Haybarn test engine, install VGI from `community` and use `LOAD vgi`. `LOCATION 'launch:/absolute/path/to/worker'` uses Unix sockets. Both workers also support `--http --host 127.0.0.1 --port 8000`; load `httpfs` before attaching an HTTP URL.
+
+## SQL interface
+
+Each worker has `sources`, `capabilities` and `source_status` tables, also callable with `()`. They expose configured endpoints, supported operations, authentication modes and index coverage. Native-source readiness reports adapter availability, not a live service health probe.
+
+| Worker | Table function | Inputs |
+| --- | --- | --- |
+| packages | `search` | source ID, query, maximum results |
+| packages | `package`, `versions` | source ID, native package name |
+| packages | `artifacts`, `dependencies` | source ID, native package name, exact version |
+| containers | `search` | source ID, query, maximum results |
+| containers | `repository`, `tags` | source ID, namespace/repository |
+| containers | `manifest`, `platforms`, `layers`, `configuration` | source ID, namespace/repository, tag or digest |
+
+All non-search operations accept `max_results := 1000`. Limits must be 1–10,000. A row limit intentionally bounds the result; it is not a claim that all upstream rows were returned. Errors after partial batches fail the SQL statement; do not treat streamed partial rows as a successful complete scan.
+
+Names and versions retain their native meaning. Maven uses `groupId:artifactId`; Go preserves module-path case and proxy escaping; nixpkgs uses attribute paths; OCI uses namespace/repository and immutable digests. No universal version comparison or dependency solver is provided. Nullable columns mean the upstream value is unavailable. `metadata` holds additional sanitized JSON. Artifact bytes and image layer payloads are never downloaded.
+
+Resolve an image index using `platforms`, then pass a chosen platform digest to `layers` or `configuration`. Passing a multi-platform index to those functions fails with `PLATFORM_REQUIRED`. Manifest and configuration SHA256 values are checked against downloaded metadata. Tag discovery does not resolve every tag automatically.
+
+The starter's `greet`, `sequence_table` and `fetch_items` examples remain in the package catalog, with their original tests, for starter compatibility.
+
+## Source coverage and indexing
+
+| Ecosystem | Search | Metadata and scope |
+| --- | --- | --- |
+| npm | Native | Registry search, packuments, dist-tags, artifacts, dependency categories and peer metadata |
+| PyPI | Prepared name index | PEP 691 Simple JSON inventory; live Simple versions and Warehouse project/release JSON, per-file hashes/yanking, Requires-Dist declarations |
+| crates.io | Native | Crates, versions, yanking, features, targets and optional dependencies |
+| Maven Central | Native Solr | Coordinates and versions; repository POM metadata, packaging artifact and POM; unresolved parent/BOM properties remain explicit |
+| NuGet | Native service-index discovery | Flat-container versions/artifacts and registration metadata; dependency groups preserve target frameworks |
+| RubyGems | Native | Releases and platform variants; runtime/development requirements |
+| Go modules | Prepared name index | Incremental public feed or imported inventory; exact metadata from configured module proxy, raw go.mod require/replace/exclude declarations |
+| Conda | Prepared | Full repodata for one configured channel/subdir; `.conda` and `.tar.bz2`, builds, depends and constrains |
+| Homebrew | Prepared | Formula or cask JSON; bottles/platforms and declared requirements; choose separate sources for formulae and casks |
+| Debian/APT | Prepared | Release-selected Packages or Sources for one suite/component/architecture, SHA256 checks, alternative dependency groups |
+| RPM | Prepared | repomd-selected primary XML, compressed-index checksum checks, epoch/version/release, architectures and dependency capabilities |
+| Alpine | Prepared | v2 APKINDEX archive or v3 ADB export; architecture, native constraints and package hashes |
+| nixpkgs | Prepared | Pinned 40-hex Git revision and system; evaluated attributes, metadata, derivation/output paths; dependencies explicitly unsupported |
+| Docker Hub / Quay | Native | Provider search and repository metadata; OCI Distribution API for image inspection |
+
+Search order follows the native provider or local snapshot's deterministic name order. Provider scores are not comparable between registries. Index search is case-insensitive substring matching over the advertised fields. PyPI/Go search names only. A source's `complete` flag means its configured input has been exhausted, not that all packages in the ecosystem are covered. Homebrew/repository indexes represent currently published records rather than historical releases. Maven artifacts do not enumerate every classifier. NuGet package metadata selects the last registration entry; use versions for the release inventory. Private PyPI metadata requires a Warehouse-compatible JSON API in addition to a Simple index.
+
+```sh
+bin/vgi-software-index prepare alpine_public
+bin/vgi-software-index status alpine_public
+bin/vgi-software-index prepare homebrew_public
+# Go consumes one 2,000-event page per invocation, committing its checkpoint.
+# Repeat prepare until complete=true; rerun later to discover newer events.
+bin/vgi-software-index prepare go_public
+```
+
+`prepare SOURCE --input /absolute/path/to/export` imports the source's native format. Go accepts newline-delimited index events; nixpkgs accepts `nix-env -qa --json --meta` output; Alpine v3 accepts `apk adbdump --format json` output. Other sources accept the same JSON, XML, paragraph file or compressed index their adapter normally downloads. APT imports can be raw Packages/Sources or compressed files; Alpine v2 accepts APKINDEX text or `.tar.gz`.
+
+Nix requires `options.revision` pinned to a full commit. Without `--input`, preparation invokes `nix-env -f <repository>/archive/<revision>.tar.gz -qa --json --meta --argstr system <system>`; install Nix and allow a sufficient timeout for evaluation. For authenticated/private Nix evaluation, supply an independently generated pinned export. Alpine v3 binary ADB preparation invokes an installed `apk` supporting `adbdump --format json`; JSON import works without it. XZ and bzip2 index compression require `xz` and `bzip2`; gzip and zstd are built in. No evaluator installs packages.
+
+Snapshot replacement is transactional. Readers detect a changed snapshot between batches and fail with `SNAPSHOT_CHANGED`, so retry the query after a refresh. Empty replacements are rejected unless `options.allow_empty` is explicitly `"true"`. Source settings and credential identity partition caches; rotating credentials requires preparing a new private snapshot. SQLite files use mode 0600 and newly created cache directories use 0700.
+
+## Configuration and optional authentication
+
+Set `VGI_SOFTWARE_CONFIG` to an absolute JSON file path **before starting the SQL engine or worker**. Without it, 15 public source presets are available; indexed sources still need preparation. See [config.example.json](config.example.json). `include_defaults: true` merges custom sources by ID. Otherwise, `sources` replaces the presets. Override a preset by using its existing ID. The cache defaults to `~/.cache/vgi-software`, overridable with `VGI_SOFTWARE_CACHE` or `cache_dir`.
+
+Each source has `id`, `kind`, `url`, optional `registry_url`, `index_url`, `allowed_origins`, `auth`, `registry_auth` and ecosystem-specific `options`. Options are string values. Common repository boundaries include `suite`, `component`, `architecture`, `subdir`, `channel`, `type`, `format`, `revision`, `system`, `since` and `index_ttl_seconds` (default 86400). `index_url` overrides the selected metadata location, which can bypass Release/repomd checksum discovery.
+
+Authentication modes are `auto` (default), `anonymous` (ignore credentials) and `required` (fail when missing). Credentials are resolved in this order:
+
+1. A `software_registry` SQL secret matching `source_id` and optional `purpose` (`api` or `registry`).
+2. A configured `token_file`, `token_env`, or `password_env` reference.
+3. Anonymous access, if allowed. A configured but missing credential fails explicitly.
 
 ```sql
-INSTALL vgi FROM community;
-LOAD vgi;
-ATTACH 'starter' (TYPE vgi, LOCATION '/abs/path/to/vgi-starter-typescript/bin/vgi-starter-worker');
+-- After ATTACH has registered the secret type:
+CREATE SECRET private_packages (
+  TYPE software_registry,
+  SOURCE_ID 'npm_private',
+  TOKEN 'your-read-token',
+  SCHEME 'bearer'
+);
+SELECT name FROM packages.main.search('npm_private', 'internal', 25);
+DROP SECRET private_packages;
 ```
 
-Now call the functions:
+Use a secret manager or environment/file references for real credentials rather than storing literals in shared SQL. `scheme` supports `bearer`, `basic` (with `username`) and `token` (the complete Authorization header value). Docker Hub API tokens and OCI registry credentials can differ: use `auth` for the Hub API, `registry_auth` for the registry, and secret `purpose` to separate them. Docker Hub PAT/username credentials can use Basic for the OCI token exchange; Hub API access uses its API bearer token. Quay OAuth API tokens and robot registry credentials can likewise be separate.
 
-```sql
-SELECT starter.main.greet('Ada');                         -- Hi, Ada!
-SELECT starter.main.greet('Ada', 'formal');               -- Good day, Ada.
-SELECT * FROM starter.main.sequence_table(5, step := 2) ORDER BY n;
+`allowed_origins` controls which hosts may be fetched. It does **not** automatically authorize forwarding credentials. Credentials go to the primary API/registry origin and explicitly listed `auth.origins`/`registry_auth.origins`; `paths` optionally narrows them to URL path prefixes. OCI credentials are sent to a cross-origin token service only when explicitly trusted by `registry_auth.origins`. Default Docker Hub settings trust its official token service. Known metadata CDN origins are allowed for Docker Hub and Quay; redirects strip registry authorization before CDN requests. Add any deployment-specific CDN explicitly.
+
+SQL secrets use the VGI secret channel. Credentials are excluded from serialized query state and are redacted from result metadata. HTTP caches and OCI tokens are partitioned by source and credentials. HTTP cache entries expire after 60 seconds by default; missing required credentials fail even if a prior request was cached. Upstream revocation of still-configured credentials can take until cache expiry to be observed.
+
+Default per-query limits are 100 HTTP requests, 128 MiB received bytes, 30 seconds elapsed, three retries, and 60-second HTTP cache TTL. Retry-After, ETag revalidation, response streaming byte limits, origin checks and pagination-cycle checks are implemented. Imports/decompressed payloads have byte limits too; parsing may materialize a bounded JSON/XML document in memory. Large Conda/RPM catalogs and Nix evaluation often need larger administrator-configured budgets. Request/byte exhaustion fails explicitly. Cancellation stops future page requests; an in-flight VGI request is bounded by its configured timeout.
+
+APT/RPM checksums detect inconsistent metadata downloads; repository signature verification and package installation are not implemented. Image inspection covers metadata, not image contents, vulnerability scanning or generated SBOMs.
+
+## HTTP and containers
+
+```sh
+# Local HTTP servers use different ports.
+bin/vgi-packages-worker --http --port 8000
+bin/vgi-containers-worker --http --port 8001
+
+# One Docker image contains both workers and the index CLI.
+docker build -t vgi-software .
+docker run --rm -p 8000:8000 vgi-software
+# Select the container-image worker:
+docker run --rm -e VGI_WORKER=containers -p 8001:8000 vgi-software
 ```
 
-`fetch_items` pages through a REST API. Try it against the public demo API (25 fixed items):
+Mount configuration, credential files and a writable cache for persistent/private deployments. Set `VGI_SIGNING_KEY` consistently across HTTP replicas to preserve SDK state tokens across requests/restarts. Upstream registry credentials are separate from access control for the worker's HTTP endpoint; use authenticated ingress when hosting private sources. The Docker image includes XZ/bzip2, but Nix/apk tooling is optional and must be supplied when needed.
 
-```sql
-SELECT category, count(*) AS items, round(avg(price), 2) AS avg_price
-FROM starter.main.fetch_items('https://vgi-starter-api.query-farm.services/v1')
-GROUP BY category ORDER BY category;
+## Development and verification
+
+The project uses the published [TypeScript starter](https://github.com/Query-farm/vgi-starter-typescript) at commit `145aedcb87ed8fadde6dfb8a26197d0d68112369` (starter 1.3.0). Its baseline `make check` passed before implementation. The SDK constraint remains `@query-farm/vgi ~0.50.0`, resolved to **0.50.0** in `bun.lock`; RPC is **0.29.7** and Arrow **21.1.1**. Starter tests and metadata gates remain enabled.
+
+```sh
+make check                 # formatting, types, unit/VGI tests, SQL on 3 transports, both metadata gates
+make test-duckdb            # stock DuckDB 2.0.0, VGI from query_farm
+make test-bundle            # compiled workers + index CLI, SQL outside the source tree
+bun run tests/software/live.ts  # optional public-service smoke tests; network dependent
 ```
 
-If an older cached extension misbehaves, refresh it with `FORCE INSTALL vgi FROM query_farm;`
-(DuckDB) or `FORCE INSTALL vgi FROM community;` (Haybarn).
+Deterministic fixtures cover all 15 adapters, native dependency conditions, more than one Arrow batch, empty results, pagination, source/credential cache isolation, retry/ETag/budgets, optional credentials, atomic snapshots and verified OCI descriptors. Production SQL tests use **Haybarn 2.0.0rc11** over stdio, launch and HTTP, plus a separate **stock DuckDB 2.0.0** run. SQL tests create/drop a source-scoped secret and verify access is withdrawn. `tests/software/verify_sql.py` contains the exact ATTACH and SELECT assertions.
 
-## Using it in a pipeline
+Live smoke tests exercise all seven native package metadata adapters, both image registries, Alpine/Homebrew index preparation and image configuration retrieval. Nix evaluation and binary ADB decoding require their optional external tools; this environment tests their JSON export paths. The release workflow compiles all three programs; CI also runs production SQL and standalone-artifact verification. Release archives are available from https://github.com/Query-farm/vgi-software-packages/releases.
 
-Worker functions compose with everything else in DuckDB:
-
-```sql
--- Materialize an API into a local table.
-CREATE TABLE items AS SELECT * FROM starter.main.fetch_items('https://vgi-starter-api.query-farm.services/v1');
-
--- Join it with local files.
-SELECT i.name, i.price, s.units
-FROM items i JOIN 'sales.parquet' s ON s.item_id = i.id;
-
--- Call a scalar per row of another table.
-SELECT customer, starter.main.greet(customer, 'formal') FROM read_csv('customers.csv');
-```
-
-## Project layout
-
-```
-src/
-  worker.ts        # entry point: serves the catalog over stdio, --unix or --http
-  catalog.ts       # assembles the catalog; add new functions to FUNCTIONS
-  meta.ts          # catalog/schema metadata + helpers (objectTags, column)
-  greet.ts         # scalar example (overloads, const param with choices)
-  sequence.ts      # table function example (named args, streaming state)
-  fetch_items.ts   # REST API table function (pagination, retries, secrets)
-  cli.ts           # flag parsing: stdio / --unix / --http (PORT:<n>, /health)
-  log.ts           # stderr logger
-bin/               # vgi-starter-worker (what DuckDB launches) and run-recipe
-tests/             # bun unit tests (worker subprocess + mock API)
-test/sql/          # sqllogictest files run through DuckDB
-test/mock_api/     # offline mock of the REST API used by tests
-examples/          # recipes: pushdown, caching, catalog tables, aggregates, COPY …
-ci/                # integration harness used by `make test-sql` and CI
-scripts/           # vgi_template.py (init / template-diff)
-vgi-agent-tests.yaml  # private graders for the agent test tasks
-```
-
-## Adding a function
-
-1. Create `src/<name>.ts`. Copy the closest example: `greet.ts` for a scalar,
-   `sequence.ts` for a generator, `fetch_items.ts` for an API.
-2. Declare arguments: `params` + `argDocs` (scalars), or the ordered `parameters`
-   list when a constant needs `choices`/`ge`/`le`. Table functions use `args`,
-   `argDocs` and `argConstraints`; an argument listed in `argDefaults` becomes a
-   named argument (`step := 2`), the others are positional.
-3. Give it `description`, `tags: objectTags(...)` (from `src/meta.ts`) and
-   `examples`.
-4. Add it to `FUNCTIONS` in `src/catalog.ts`.
-
-**Which kind of function?**
-
-| You want to… | Use |
-|---|---|
-| compute one value per input row | a **scalar** function |
-| return a set of rows from arguments (an API, a file, a generator) | a **table** function |
-| transform or aggregate the rows of a query | a **table in-out** function or an **aggregate** |
-| expose a fixed dataset by name (`SELECT * FROM starter.main.t`) | a **catalog table** |
-| write data out to a file or service | `COPY … TO` with a copy function |
-| accept `INSERT` / `UPDATE` / `DELETE` | a catalog table with insert/update/delete functions |
-
-The [examples/](examples/) folder has a recipe for most of these. Writable tables have no
-recipe:
-
-A writable table is a `TableDescriptor` that names a table in-out function per operation in
-`insertFunction`, `updateFunction` and `deleteFunction`, with the richest result each one
-produces in `writeResultModes`. `writeOptions`, `writeResultSchema`, `writeResultBatch` and
-`rowIdField` (all exported by `@query-farm/vgi`) read DuckDB's `write_options` argument and
-build the result. UPDATE and DELETE need the table's scan `function` to emit `rowIdField()` and
-support projection pushdown. Transactions: return `supports_transactions` from the catalog's
-attach and override `transactionBegin` / `transactionCommit` / `transactionRollback`.
-Since VGI protocol 3.3 a table's scan and write functions are table-only: hidden from
-`duckdb_functions()` and not callable from SQL. Set `exposeScan: true` on the table to keep the
-scan callable as an ordinary table function too (write functions never are).
-[`examples/simple-writable-worker.ts`](https://github.com/Query-farm/vgi-typescript/blob/main/examples/simple-writable-worker.ts)
-and `examples/writable-tx-worker.ts` in vgi-typescript are complete workers.
-
-## Secrets and configuration
-
-`fetch_items` shows the recommended pattern. A bearer token comes from a DuckDB secret
-when one exists, and from an environment variable otherwise:
-
-```sql
-CREATE SECRET (TYPE starter_api, TOKEN 'your-token');      -- per session, never logged
-```
-
-```bash
-STARTER_API_TOKEN=your-token make run-http                # for servers and containers
-```
-
-Try it: the demo API's `/v1/auth` endpoint needs the published token `demo-token`.
-
-```sql
-SELECT count(*) FROM starter.main.fetch_items('https://vgi-starter-api.query-farm.services/v1/auth');   -- fails: HTTP 401
-CREATE SECRET (TYPE starter_api, TOKEN 'demo-token');
-SELECT count(*) FROM starter.main.fetch_items('https://vgi-starter-api.query-farm.services/v1/auth');   -- 25
-```
-
-Never bake credentials into the image or the source. If a function can't run without
-real credentials, its examples can't execute in CI either. Set `execute: false` on the
-metadata check for that worker (see `.github/workflows/ci.yml`), and add
-`LINT_ARGS ?= --no-execute` to the Makefile so local runs match.
-
-## Testing
-
-```bash
-make test-unit                 # fast TypeScript unit tests
-make test-sql                  # test/sql/*.test through DuckDB (stdio)
-make test-sql TRANSPORT=http   # …over HTTP (also: launch)
-make check                     # everything CI runs
-```
-
-`test/sql/*.test` files are [sqllogictest](https://duckdb.org/docs/stable/dev/sqllogictest/intro)
-scripts. `ci/run-integration.sh` runs them against your worker and fails on any
-unexpected skip, so a broken transport can't hide behind a green run.
-`fetch_items` is tested against `test/mock_api/server.py` so tests are fast and
-offline.
-
-**Testing against real data:** put live tests in their own `.test` file that starts with
-`require-env STARTER_LIVE`. They run only when that variable is set. Add the skip reason
-to `EXPECTED_SKIP_REASONS` in CI.
-
-## Metadata and the quality score
-
-DuckDB, agents and documentation tools discover your functions through their metadata:
-titles, descriptions, argument docs, examples and keywords.
-[vgi-lint](https://github.com/Query-farm/vgi-lint-check) checks it, and CI runs it on
-every push. Its settings live in `vgi-lint.toml`, which `make lint-explain`,
-`vgi-lint lint`, and CI all read. This template scores 100/100 with no findings.
-
-```bash
-make lint-explain                              # findings, each with its fix
-make lint-explain LINT_ARGS="--format agent"   # the same, grouped for coding agents
-make lint-ai                                   # optional: an agent must solve vgi-agent-tests.yaml
-```
-
-Each report also states an **assurance level**: how much was actually verified.
-
-| Level | Reached when | Here |
-|---|---|---|
-| L1 structural | the static metadata is clean | workers that need real credentials (`execute: false` in CI) |
-| L2 behavioural | the examples also run and return what they claim | **the CI gate** |
-| L3 semantic | an agent solves the worker's own test tasks, and the docs are reviewed | `make lint-ai`, before publishing |
-
-- **How strict.** Your copy fails on warnings (`fail_on = "warning"` in `vgi-lint.toml`).
-  Raise it to `"info"` before you publish the worker for others.
-- **The linter isn't pinned.** It tracks the current quality bar, so a new rule can flag
-  metadata that passed yesterday. Fix it, or waive the finding.
-- **Waivers.** If a finding is genuinely wrong for your worker, waive it in
-  `vgi-lint.toml` with a `kind` and a `reason`.
-- **Existing workers.** If you're adding this gate to a worker that already has
-  findings, record them with `vgi-lint lint --baseline vgi-lint-baseline --update-baseline`
-  and set `baseline` in `vgi-lint.toml`. After that, only new findings fail.
-
-Metadata lives in `src/meta.ts` and the `tags`/`examples` of each function.
-
-## Logging and debugging
-
-stdout carries the Arrow protocol, so **never print to stdout**. Log to stderr instead.
-Use `log` from `src/log.ts` (it writes to stderr); `--debug` or `--log-level debug` turns it up and also enables the SDK's own tracing (`VGI_DEBUG`).
-
-- Under DuckDB (stdio/launch), worker stderr shows up in DuckDB's error messages and
-  terminal.
-- In Docker it goes to `docker logs`.
-- `make debug` runs one query against the worker with debug logging on.
-
-## Deploying
-
-The same binary serves stdio (DuckDB starts it locally) or HTTP (you host it):
-
-```bash
-docker build -t weather-worker .
-docker run -p 8000:8000 -e STARTER_API_TOKEN=... weather-worker   # health: GET /health
-```
-
-```sql
-ATTACH 'starter' (TYPE vgi, LOCATION 'https://workers.example.com/starter');
-```
-
-Put hosted workers behind TLS and authentication. See
-[authentication](https://query.farm/vgi/authentication) for bearer tokens and JWTs, and
-[distributing a worker](https://query.farm/vgi/distributing-a-worker) for packaging.
-Pass secrets with `-e` or your platform's secret manager.
-
-## Releasing
-
-Push a tag like `v0.1.0`. The release workflow compiles the worker with `bun build --compile` into a standalone executable for Linux (x86-64, arm64), macOS (arm64) and Windows (x86-64), and attaches the archives to the GitHub release. Users download one file and point `LOCATION` at it, with no Bun or `node_modules` on the host. Every artifact is signed with cosign and
-carries SLSA build provenance. `ci/check-version.sh` makes sure the tag matches the
-version in `package.json`.
-
-## Using with coding agents
-
-[AGENTS.md](AGENTS.md) is written for AI coding agents (Claude Code reads it via
-`CLAUDE.md`; Codex, Cursor and others read it directly). It covers the commands, the
-recipe for adding a function, the metadata checklist and the sharp edges. A good first
-prompt:
-
-> Read AGENTS.md. Replace `fetch_items` with `forecast(lat DOUBLE, lon DOUBLE)` that calls
-> the Open-Meteo API. Include full metadata, a mock-server test and a `STARTER_LIVE` test.
-> You're done when `make check` passes.
-
-## Keeping up with the template
-
-`make template-diff` shows what changed upstream (CI, docs, examples) since your copy was
-made. Your copy records its template version in `.vgi-starter.json`.
-
-## Learn more
-
-- [What is VGI?](https://query.farm/vgi) · [Getting started](https://query.farm/vgi/getting-started) · [Building a worker](https://query.farm/vgi/building-a-worker)
-- [TypeScript SDK docs](https://query.farm/vgi/docs/typescript/): [scalar tutorial](https://query.farm/vgi/docs/typescript/tutorial/scalar/), [table tutorial](https://query.farm/vgi/docs/typescript/tutorial/table/)
-- [Distributing a worker](https://query.farm/vgi/distributing-a-worker) · [Choosing a language](https://query.farm/vgi/languages) · [llms.txt](https://query.farm/vgi/llms.txt)
-- SDK source: [@query-farm/vgi](https://github.com/Query-farm/vgi-typescript) · RPC layer: [https://vgi-rpc-typescript.query.farm](https://vgi-rpc-typescript.query.farm)
+Upstream protocol references: [PyPI Simple](https://packaging.python.org/en/latest/specifications/simple-repository-api/), [NuGet API](https://learn.microsoft.com/en-us/nuget/api/overview), [Go proxy](https://go.dev/ref/mod#goproxy-protocol), [OCI Distribution](https://github.com/opencontainers/distribution-spec/blob/main/spec.md), [Docker Hub API](https://docs.docker.com/reference/api/hub/latest/), [Quay API](https://docs.projectquay.io/api_reference.html), [Alpine ADB schema](https://github.com/alpinelinux/apk-tools/blob/master/src/apk_adb.c).
 
 ## Support
 
-Open an issue on this repository. For VGI itself, see [query.farm](https://query.farm).
-
-## Authorship & license
-
-The starter template is written by [Query.Farm](https://query.farm) and released under
-the [BSD Zero Clause License](LICENSE) (0BSD). Use it for anything, with no attribution
-required. Replace this section with your own license once the code is yours.
+Report reproducible worker defects through the repository issue tracker. Include the worker version, ecosystem, transport and a sanitized query. Do not include credentials or private package metadata. Upstream registry availability and access permissions remain controlled by each provider.

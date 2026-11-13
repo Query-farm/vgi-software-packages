@@ -12,10 +12,10 @@
 
 import { field, type VgiDataType, type VgiField } from "@query-farm/vgi";
 
-export const CATALOG_NAME = "starter";
+export const CATALOG_NAME = "packages";
 export const VERSION = "0.1.0";
 
-export const SOURCE_URL = "https://github.com/Query-farm/vgi-starter-typescript";
+export const SOURCE_URL = "https://github.com/Query-farm/vgi-software-packages";
 
 /**
  * Categories group functions in docs and agent tools. Every object's
@@ -62,48 +62,59 @@ export function column(name: string, type: VgiDataType, comment: string, nullabl
 }
 
 export const CATALOG_DOC_LLM =
-  "An example VGI worker generated from the Query.Farm starter template. It shows the three shapes " +
-  "most workers need: a vectorized scalar function with an overload, a deterministic table " +
-  "function with a named default argument, and a table function that pages through a REST API with " +
-  "retries and an optional bearer token taken from a DuckDB secret or an environment variable. " +
-  "Replace them with your own functions; keep the metadata complete so agents can discover and " +
-  "call them.";
-
+  "Search 13 software package ecosystems from SQL: npm, PyPI, crates.io, Maven Central, NuGet, RubyGems, Go, Conda, Homebrew, APT, RPM, Alpine and pinned nixpkgs. Read native versions, artifacts and dependency declarations. Use sources, capabilities and source_status for discovery; prepare indexed sources using bin/vgi-software-index. Authentication is optional and source-scoped. Container images have a separate containers worker. Starter example functions remain available for compatibility.";
 export const CATALOG_DOC_MD =
-  "# VGI starter worker\n\n" +
-  "**An example [VGI](https://query.farm/vgi) worker that brings custom functions into DuckDB " +
-  "SQL.** It was generated from the Query.Farm starter template and is meant to be renamed and " +
-  "rewritten: every function here demonstrates one pattern you will reuse, from vectorized scalars " +
-  "and streaming table functions to a REST API reader that retries politely and reads a bearer " +
-  "token from a DuckDB secret or the environment.\n\n" +
-  "The worker speaks Apache Arrow to DuckDB over stdin/stdout, a Unix socket, or HTTP, so the " +
-  "same code runs as a local subprocess or a hosted service. See the " +
-  "[VGI documentation](https://query.farm/vgi/docs/) to learn more.";
-
+  "## Software package metadata\n\n" +
+  CATALOG_DOC_LLM +
+  "\n\n### Usage\n\nDiscover configured sources, prepare any required index, then query search, package, versions, artifacts and dependencies. The separate container worker provides OCI image inspection.";
 export const SCHEMA_DOC_LLM =
-  "The `main` schema holds the starter template's example functions, one per common worker " +
-  "pattern. `greet(name)` and `greet(name, style)` are vectorized scalars: use them inside a " +
-  "projection or predicate, one result per row; `style` is a constant that must be 'casual' or " +
-  "'formal'. `sequence_table(count, step := 1)` is a deterministic table function that returns " +
-  "`count` rows of `(n, squared)`; use it for demos, tests, and as a template for generators. " +
-  "`fetch_items(base_url, page_size := 100)` reads every item from a paginated JSON REST API as " +
-  "`(id, name, category, price)` rows, streaming one page per batch, retrying rate-limited " +
-  "requests, and authenticating with a `starter_api` DuckDB secret or the `STARTER_API_TOKEN` " +
-  "environment variable. Scalars cannot take named arguments; table functions can.";
-
+  "Inspect sources and capabilities, then search a selected registry with an explicit result limit. Indexed registries require an administrator-prepared snapshot; source_status reports its scope, freshness and completeness. Package versions and dependency conditions retain ecosystem semantics. HTTP requests are bounded by request, time and byte budgets. Private reads accept software_registry SQL secrets or configured environment/file credential references. Artifacts are metadata only; no packages are installed.";
 export const SCHEMA_DOC_MD =
-  "## main\n\n" +
-  "The starter template's example functions, one per common worker pattern.\n\n" +
-  "- **Scalars** answer one question per row and slot into a projection or predicate.\n" +
-  "- **Table functions** return sets of rows, streamed to DuckDB in Arrow batches.\n" +
-  "- **REST readers** page through an HTTP API and authenticate with a DuckDB secret.";
+  "## Package functions and discovery tables\n\n" +
+  SCHEMA_DOC_LLM +
+  "\n\n### Source boundaries\n\nSearch completeness refers to the configured channel, suite, architecture, revision or feed checkpoint. It does not imply coverage of an entire ecosystem. Use the metadata JSON column for native details that do not fit the shared columns.";
 
 export const AGENT_TEST_TASKS = [
-  { name: "formal_greeting", prompt: "Using the starter worker, greet the name 'Grace' formally." },
+  {
+    name: "packages_sources",
+    prompt: "Using the packages worker, return all columns from sources for all configured sources.",
+  },
+  {
+    name: "packages_capabilities",
+    prompt: "Using the packages worker, return all columns from capabilities for all configured sources.",
+  },
+  {
+    name: "packages_source_status",
+    prompt: "Using the packages worker, return all columns from source_status for all configured sources.",
+  },
+  {
+    name: "packages_search",
+    prompt:
+      "Using the packages worker, return all columns from search for the public npm search for typescript, limited to 5 results.",
+  },
+  {
+    name: "packages_package",
+    prompt: "Using the packages worker, return all columns from package for the inputs 'pypi_public', 'requests'.",
+  },
+  {
+    name: "packages_versions",
+    prompt: "Using the packages worker, return all columns from versions for the inputs 'pypi_public', 'requests'.",
+  },
+  {
+    name: "packages_artifacts",
+    prompt:
+      "Using the packages worker, return all columns from artifacts for the inputs 'pypi_public', 'requests', '2.32.3'.",
+  },
+  {
+    name: "packages_dependencies",
+    prompt:
+      "Using the packages worker, return all columns from dependencies for the inputs 'pypi_public', 'requests', '2.32.3'.",
+  },
+  { name: "formal_greeting", prompt: "Using the packages worker, greet the name 'Grace' formally." },
   {
     name: "sum_of_squares",
     prompt:
-      "Using the starter worker, what is the sum of the squared column for the first 10 rows " +
+      "Using the packages worker, what is the sum of the squared column for the first 10 rows " +
       "of the sequence with the default step?",
   },
   {
@@ -118,8 +129,8 @@ export const AGENT_TEST_TASKS = [
 ];
 
 export const CATALOG_TAGS: Record<string, string> = {
-  "vgi.title": "VGI Starter Worker",
-  "vgi.subtitle": "Example DuckDB functions to rename and replace: a scalar, a table function and a REST API reader.",
+  "vgi.title": "VGI Packages Worker",
+  "vgi.subtitle": "Search software packages and inspect native release metadata with optional authentication.",
   "vgi.doc_llm": CATALOG_DOC_LLM,
   "vgi.doc_md": CATALOG_DOC_MD,
   "vgi.source_url": SOURCE_URL,
@@ -127,17 +138,17 @@ export const CATALOG_TAGS: Record<string, string> = {
   "vgi.license": "0BSD",
   "vgi.author": "Query.Farm",
   "vgi.copyright": "Copyright 2026 Query.Farm LLC",
-  "vgi.keywords": keywordsArray("vgi, duckdb, starter template, example worker, rest api, table function"),
+  "vgi.keywords": keywordsArray("vgi, duckdb, software packages, registry, authentication, metadata"),
   "vgi.support_contact": `${SOURCE_URL}/issues`,
-  "vgi.support_policy_url": `${SOURCE_URL}#support`,
+  "vgi.support_policy_url": SOURCE_URL,
   // Public analyst tasks for `vgi-lint simulate`; private graders live in vgi-agent-tests.yaml.
   "vgi.agent_test_tasks": JSON.stringify(AGENT_TEST_TASKS),
 };
 
 export const SCHEMA_TAGS: Record<string, string> = {
-  "vgi.title": "Starter Functions",
-  domain: "examples",
-  "vgi.keywords": keywordsArray("greeting, sequence, generator, rest api, pagination"),
+  "vgi.title": "Packages Functions",
+  domain: "software",
+  "vgi.keywords": keywordsArray("packages, registries, artifacts, dependencies, pagination"),
   "vgi.doc_llm": SCHEMA_DOC_LLM,
   "vgi.doc_md": SCHEMA_DOC_MD,
   "vgi.categories": JSON.stringify(SCHEMA_CATEGORIES),

@@ -3,14 +3,38 @@
 # See https://github.com/Query-farm/vgi-lint-check (VGI920).
 tasks:
   - name: formal_greeting
-    reference_sql: SELECT starter.main.greet('Grace', 'formal') AS greeting
+    reference_sql: SELECT packages.main.greet('Grace', 'formal') AS greeting
   - name: sum_of_squares
-    reference_sql: SELECT sum(squared) AS total FROM starter.main.sequence_table(10)
+    reference_sql: SELECT sum(squared) AS total FROM packages.main.sequence_table(10)
   - name: stepped_sequence
-    reference_sql: SELECT n FROM starter.main.sequence_table(4, step := 5) ORDER BY n
+    reference_sql: SELECT n FROM packages.main.sequence_table(4, step := 5) ORDER BY n
   # Reads the public demo API (https://vgi-starter-api.query-farm.services/v1).
   - name: items_per_category
     check_sql: >-
       SELECT count(*) = 3 AND sum(items) = 25
       FROM (SELECT category, count(*) AS items
-            FROM starter.main.fetch_items('https://vgi-starter-api.query-farm.services/v1') GROUP BY category)
+            FROM packages.main.fetch_items('https://vgi-starter-api.query-farm.services/v1') GROUP BY category)
+
+  - name: packages_sources
+    reference_sql: "SELECT * FROM packages.main.sources()"
+
+  - name: packages_capabilities
+    reference_sql: "SELECT * FROM packages.main.capabilities()"
+
+  - name: packages_source_status
+    reference_sql: "SELECT * FROM packages.main.source_status()"
+
+  - name: packages_search
+    reference_sql: "SELECT * FROM packages.main.search('npm_public', 'typescript', 5)"
+
+  - name: packages_package
+    reference_sql: "SELECT * FROM packages.main.package('pypi_public', 'requests')"
+
+  - name: packages_versions
+    reference_sql: "SELECT * FROM packages.main.versions('pypi_public', 'requests')"
+
+  - name: packages_artifacts
+    reference_sql: "SELECT * FROM packages.main.artifacts('pypi_public', 'requests', '2.32.3')"
+
+  - name: packages_dependencies
+    reference_sql: "SELECT * FROM packages.main.dependencies('pypi_public', 'requests', '2.32.3')"
