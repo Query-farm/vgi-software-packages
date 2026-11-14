@@ -48,3 +48,12 @@ Official references: [PyPI JSON API](https://docs.pypi.org/api/json/), [wheel fi
 The saved defaults embed outputs. Generated logs, images and separate experiments are ignored under `validation/`. Experiment copies include fixtures/provenance, branding, helper, runner and environment files. [STANDARD.md](STANDARD.md) records presentation conventions.
 
 Source `make check` passed: 55 Bun tests; starter/recipe SQL assertions 80 stdio, 80 Unix-launch and 43 HTTP; 54 production SQL checks per transport across both workers; Biome and TypeScript gates. Both metadata catalogs score 100/100 L2 with zero errors/warnings and one existing informational source-ID foreign-key suggestion each; the repository's configured gate passes. No source code or root dependency locks were changed.
+
+## SQL credential isolation
+
+Each public notebook creates Haybarn with a fresh temporary `secret_directory`
+and `allow_persistent_secrets=False` before attaching workers. It fully drains
+and verifies an empty SQL secret inventory before retrieval and again at cleanup.
+These public examples create no SQL credentials. Cleanup closes the connection
+and removes its temporary directory. Existing saved SQL secrets are neither
+read, modified nor deleted; anonymous/source configuration remains explicit.
