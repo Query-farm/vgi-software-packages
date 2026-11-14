@@ -1,4 +1,7 @@
 tasks:
+  # Two steps: platforms() on the tag yields the arm64 child digest, then layers() on that digest.
+  - name: containers_arm64_layer_total
+    reference_sql: "SELECT p.os, p.architecture, p.variant, count(*) AS layers, sum(l.size) AS total_bytes FROM containers.main.platforms('quay_public', 'prometheus/prometheus', 'v3.0.0') p JOIN containers.main.layers('quay_public', 'prometheus/prometheus', 'sha256:6cc170ffced0717293bb3d62f31cd86c52362c18cfc53d954cda2f731950543e') l ON l.manifest_digest = p.digest GROUP BY ALL"
   - name: containers_scoped_discovery
     reference_sql: "SELECT source_id, supported FROM containers.main.capabilities() WHERE source_id IN ('ghcr_public','gitlab_public') AND operation='search' ORDER BY source_id"
   - name: containers_sources

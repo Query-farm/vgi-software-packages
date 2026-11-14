@@ -2,6 +2,8 @@
 # `vgi-lint lint --ai` runs an agent on each prompt and grades it with check_sql.
 # See https://github.com/Query-farm/vgi-lint-check (VGI920).
 tasks:
+  - name: packages_native_dependency_sources
+    reference_sql: "SELECT s.source_id, s.endpoint FROM packages.main.sources s JOIN packages.main.capabilities c ON c.source_id = s.source_id AND c.operation = 'dependencies' WHERE c.supported AND s.search_mode = 'native' ORDER BY s.source_id"
   - name: packages_new_sources
     reference_sql: "SELECT source_id, ecosystem, search_mode FROM packages.main.sources() WHERE ecosystem IN ('packagist','pub','hex','cran','bioconductor','vcpkg') ORDER BY source_id"
   - name: packages_composer_dependencies

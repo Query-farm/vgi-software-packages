@@ -34,6 +34,16 @@ SELECT name, description, stars
 FROM containers.main.search('dockerhub_public', 'postgres', 25);
 SELECT digest, os, architecture
 FROM containers.main.platforms('quay_public', 'prometheus/prometheus', 'latest');
+-- Combine calls with joins: dependencies added or removed between two releases.
+WITH old AS (SELECT DISTINCT dependency
+             FROM packages.main.dependencies('pypi_public', 'requests', '2.25.1')),
+     new AS (SELECT DISTINCT dependency
+             FROM packages.main.dependencies('pypi_public', 'requests', '2.26.0'))
+SELECT coalesce(new.dependency, old.dependency) AS dependency,
+       CASE WHEN old.dependency IS NULL THEN 'added' ELSE 'removed' END AS change
+FROM old FULL OUTER JOIN new ON new.dependency = old.dependency
+WHERE old.dependency IS NULL OR new.dependency IS NULL
+ORDER BY change, dependency;
 ```
 
 Replace the absolute paths for another installation. For the pinned Haybarn test engine, install VGI from `community` and use `LOAD vgi`. `LOCATION 'launch:/absolute/path/to/worker'` uses Unix sockets. Both workers also support `--http --host 127.0.0.1 --port 8000`; load `httpfs` before attaching an HTTP URL.
@@ -51,7 +61,7 @@ Each worker has `sources`, `capabilities` and `source_status` tables, also calla
 | containers | `repository`, `tags` | source ID, namespace/repository |
 | containers | `manifest`, `platforms`, `layers`, `configuration` | source ID, namespace/repository, tag or digest |
 
-All non-search operations accept `max_results := 1000`. Limits must be 1–10,000. A row limit intentionally bounds the result; it is not a claim that all upstream rows were returned. Errors after partial batches fail the SQL statement; do not treat streamed partial rows as a successful complete scan.
+Arguments must be literals; table functions do not accept `LATERAL` column references, so combine operations by joining separate calls (for example on `version` or on a platform `digest`). All non-search operations accept `max_results := 1000`. Limits must be 1–10,000. A row limit intentionally bounds the result; it is not a claim that all upstream rows were returned. Errors after partial batches fail the SQL statement; do not treat streamed partial rows as a successful complete scan.
 
 Names and versions retain their native meaning. Maven uses `groupId:artifactId`; Go preserves module-path case and proxy escaping; nixpkgs uses attribute paths; OCI uses namespace/repository and immutable digests. No universal version comparison or dependency solver is provided. Nullable columns mean the upstream value is unavailable. `metadata` holds additional sanitized JSON. Artifact bytes and image layer payloads are never downloaded.
 

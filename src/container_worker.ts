@@ -1,6 +1,7 @@
 import type { CatalogDescriptor } from "@query-farm/vgi";
 import { serve } from "./cli.ts";
 import { CATALOG_TAGS, SCHEMA_TAGS, SOURCE_URL, VERSION } from "./meta.ts";
+import { CONTAINERS_SEARCH_PROVIDERS } from "./software/composed_examples.ts";
 import { REGISTRY_SECRET, softwareFunctions, softwareTables } from "./software/functions.ts";
 
 const functions = softwareFunctions(true);
@@ -9,7 +10,7 @@ for (const fn of functions)
 const doc =
   "Search Docker Hub and Quay repositories, configured GHCR owner inventories, and configured GitLab project inventories from SQL. Inspect OCI tags, verified manifests, platforms, layers and image configurations on all four providers. GHCR search requires options.owner (and owner_type org or user); GitLab search and repository metadata require options.project. GHCR inventory API calls require API authentication even when public image inspection is anonymous. Optional source-scoped credentials support private reads; API and OCI registry credentials can differ. Configure endpoints, budgets and credential references with VGI_SOFTWARE_CONFIG. Layer payloads are never downloaded. Use sources(), capabilities(), and source_status() for discovery. " +
   "Results preserve native namespace/repository identities as `VARCHAR` and include the configured source ID and ecosystem. Optional provider summaries and star/pull counts (`BIGINT`) may be NULL; absence is not a zero count. Image manifests are verified by SHA256. A multi-platform index holds descriptors with digest, operating system, architecture and variant; choose a platform descriptor before requesting layer or configuration details. Layer positions and declared sizes are `BIGINT`; configuration exposes the operating system, architecture and verified configuration digest. Native details remain sanitized JSON text in metadata. " +
-  "Read configured source capabilities before choosing a provider. SQL calls require nonempty search text or repository names. Row limits are from 1 through 10000; repository searches require an explicit limit, while other reads default to 1000 via a named max_results argument. Missing optional upstream fields remain SQL NULL. API requests also have independent byte, request and elapsed-time budgets. No function installs packages, executes image commands or downloads layer payloads. Private reads use source-scoped software_registry secrets or configured environment/file references; secrets are not returned in metadata.";
+  "Read configured source capabilities before choosing a provider. SQL calls require nonempty search text or repository names. Arguments must be literals (no LATERAL column references); combine operations by joining separate calls, for example platforms to layers on the platform digest. Row limits are from 1 through 10000; repository searches require an explicit limit, while other reads default to 1000 via a named max_results argument. Missing optional upstream fields remain SQL NULL. API requests also have independent byte, request and elapsed-time budgets. No function installs packages, executes image commands or downloads layer payloads. Private reads use source-scoped software_registry secrets or configured environment/file references; secrets are not returned in metadata.";
 
 export const CONTAINER_CATALOG: CatalogDescriptor = {
   name: "containers",
@@ -27,6 +28,11 @@ export const CONTAINER_CATALOG: CatalogDescriptor = {
       "\n\n### Immutable references\n\nResolve tags with manifest, inspect platforms, and select a platform digest before reading layers or configuration. Search coverage is determined by each provider and account permissions.",
     "vgi.keywords": JSON.stringify(["docker", "quay", "oci", "containers", "image search", "authentication"]),
     "vgi.agent_test_tasks": JSON.stringify([
+      {
+        name: "containers_arm64_layer_total",
+        prompt:
+          "Using the containers worker, find the linux/arm64 platform manifest of the quay_public image prometheus/prometheus at tag v3.0.0 and report how many layers it has and their total declared compressed size. Return exactly os, architecture, variant, layers, total_bytes as a single row.",
+      },
       {
         name: "containers_scoped_discovery",
         prompt:
@@ -105,6 +111,7 @@ export const CONTAINER_CATALOG: CatalogDescriptor = {
             description: "Inspect configured container providers",
             sql: "SELECT ecosystem FROM containers.main.sources ORDER BY ecosystem",
           },
+          CONTAINERS_SEARCH_PROVIDERS,
         ]),
         "vgi.doc_md":
           "## Image search and inspection\n\n" +

@@ -13,6 +13,7 @@ import {
   type VgiFunction,
 } from "@query-farm/vgi";
 import { column, objectTags } from "../meta.ts";
+import { COMPOSED_EXAMPLES } from "./composed_examples.ts";
 import { loadSettings, sourceById } from "./config.ts";
 import { authScope, digest, sanitize } from "./http.ts";
 import { type Cell, json, type Operation, RegistryError, type Row } from "./model.ts";
@@ -230,7 +231,7 @@ const guidance: Record<string, string> = {
   source_status:
     "One row per source_id describing search readiness. Join to sources using source_id for endpoint details. Indexed sources report the last committed snapshot, observation time, source revision, record count, checkpoint, declared coverage and completeness. complete means the declared input was exhausted, not ecosystem-wide coverage. Native readiness indicates adapter availability, not a remote health probe. Failed inspection produces ready=false and a safe error code. This relation is both a table and a zero-argument function.",
   search:
-    "Find package names or image repositories before requesting their detailed metadata. Native search keeps provider ranking; scores are provider-specific and nullable. Prepared indexes use case-insensitive substring matching and deterministic name order. PyPI and Go search names; other prepared indexes include descriptions. Inspect source_status before indexed search. The explicit row budget caps output without an additional truncation flag; coverage and complete describe the index input, not the result count.",
+    "Find package names or image repositories before requesting their detailed metadata. Native search keeps provider ranking; scores are provider-specific and nullable. Prepared indexes use case-insensitive substring matching and deterministic name order. PyPI, Go and pub search names only (as do GHCR and GitLab inventories); other sources include descriptions. Inspect source_status before indexed search. The explicit row budget caps output without an additional truncation flag; coverage and complete describe the index input, not the result count.",
   package:
     "Read descriptive metadata for one native package identity, normally one row. npm/PyPI/RubyGems use provider-selected current metadata; NuGet selects the last registration entry; prepared repositories expose one representative indexed package record. Maven names use groupId:artifactId and Go names preserve module-path case. Missing live packages raise NOT_FOUND; a missing indexed name returns zero rows. Use versions for the release inventory, artifacts for files, and dependencies for requirements.",
   versions:
@@ -440,7 +441,10 @@ export function softwareFunctions(container: boolean): VgiFunction[] {
           }),
           "vgi.result_columns_schema": json(specs.map(([n, type, description]) => ({ name: n, type, description }))),
         },
-        examples: [{ sql: example, description: `${description}; inspect the first ten identities` }],
+        examples: [
+          { sql: example, description: `${description}; inspect the first ten identities` },
+          ...(COMPOSED_EXAMPLES[catalog][name] ?? []),
+        ],
       });
     },
   );
