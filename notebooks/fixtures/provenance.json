@@ -1,0 +1,7 @@
+{
+  "mode": "Live anonymous public metadata, not a replay fixture",
+  "package": {"source": "https://pypi.org/pypi/pandas/2.2.3/json", "project": "pandas", "version": "2.2.3"},
+  "container": {"source": "https://quay.io/v2/prometheus/prometheus/manifests/sha256:6927e0919a144aa7616fd0137d4816816d42f6b816de3af269ab065250859a62", "repository": "prometheus/prometheus", "tag_observed": "v3.2.1", "tag_resolution_utc": "2026-11-14T09:36:34.225Z", "index_digest": "sha256:6927e0919a144aa7616fd0137d4816816d42f6b816de3af269ab065250859a62"},
+  "payloads": "No package files or image layer payloads are downloaded or installed.",
+  "limits": "max_results 1000; reaching that bound fails completeness checks. Worker per-call request/time/byte budgets remain enabled."
+}

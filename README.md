@@ -188,3 +188,7 @@ Upstream protocol references: [PyPI Simple](https://packaging.python.org/en/late
 Additional protocol references: [Packagist API](https://packagist.org/apidoc), [pub.dev API](https://pub.dev/help/api), [Hex endpoints](https://github.com/hexpm/specifications/blob/main/endpoints.md), [R package metadata](https://cran.r-project.org/doc/manuals/r-release/R-exts.html), [vcpkg registries](https://learn.microsoft.com/en-us/vcpkg/concepts/registries), [GitHub Packages API](https://docs.github.com/en/rest/packages/packages), [GitLab container API](https://docs.gitlab.com/api/container_registry/).
 
 Report reproducible worker defects through the repository issue tracker. Include the worker version, ecosystem, transport and a sanitized query. Do not include credentials or private package metadata. Upstream registry availability and access permissions remain controlled by each provider.
+
+## Executed notebooks
+
+[Package and container metadata notebooks](notebooks/README.md) compare Python wheel inventories and resolve image platforms into ordered layer sizes using public registry metadata.
