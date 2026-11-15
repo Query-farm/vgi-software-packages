@@ -1,0 +1,491 @@
+{
+  "query": "SELECT * FROM duckdb_functions() WHERE database_name='packages'",
+  "columns": [
+    "database_name",
+    "database_oid",
+    "schema_name",
+    "function_name",
+    "alias_of",
+    "function_type",
+    "description",
+    "comment",
+    "tags",
+    "return_type",
+    "parameters",
+    "parameter_types",
+    "varargs",
+    "macro_definition",
+    "has_side_effects",
+    "internal",
+    "extension_name",
+    "function_oid",
+    "examples",
+    "stability",
+    "categories"
+  ],
+  "rows": [
+    [
+      "packages",
+      "22595",
+      "main",
+      "sources",
+      null,
+      "table",
+      "List configured software sources and their optional authentication modes",
+      null,
+      {
+        "vgi.category": "api",
+        "vgi.doc_llm": "List configured software sources and their optional authentication modes. One row per configured source. Use source_id to call registry functions. Endpoint URLs are sanitized; authentication reports anonymous, auto, or required. credential_configured describes environment/file references, not SQL-secret availability. search_mode distinguishes native provider search from a prepared local index. This relation is available as both a table and a zero-argument function. Result columns (nullable when upstream data is unavailable): source_id `VARCHAR`: Configured source identifier. ecosystem `VARCHAR`: Adapter ecosystem. endpoint `VARCHAR`: Configured upstream URL. authentication `VARCHAR`: anonymous, auto, or required. credential_configured `BOOLEAN`: Whether the configuration references a credential; SQL secrets may also apply. search_mode `VARCHAR`: native or indexed search. metadata `VARCHAR`: Configured source boundaries as JSON.",
+        "vgi.doc_md": "One row per configured source. Use source_id to call registry functions. Endpoint URLs are sanitized; authentication reports anonymous, auto, or required. credential_configured describes environment/file references, not SQL-secret availability. search_mode distinguishes native provider search from a prepared local index. This relation is available as both a table and a zero-argument function.\n\n### Returned columns\n\nUnknown or inapplicable values are NULL.\n\n| Column | SQL type | Meaning |\n| --- | --- | --- |\n| source_id | `VARCHAR` | Configured source identifier. |\n| ecosystem | `VARCHAR` | Adapter ecosystem. |\n| endpoint | `VARCHAR` | Configured upstream URL. |\n| authentication | `VARCHAR` | anonymous, auto, or required. |\n| credential_configured | `BOOLEAN` | Whether the configuration references a credential; SQL secrets may also apply. |\n| search_mode | `VARCHAR` | native or indexed search. |\n| metadata | `VARCHAR` | Configured source boundaries as JSON. |",
+        "vgi.example_queries": "[{\"description\":\"List configured software sources and their optional authentication modes; inspect the first ten identities\",\"sql\":\"SELECT source_id FROM packages.main.sources() ORDER BY source_id LIMIT 10\"}]",
+        "vgi.keywords": "[\"software\",\"registry\",\"package\",\"container\",\"metadata\",\"authentication\",\"search\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"source_id\",\"type\":\"VARCHAR\",\"description\":\"Configured source identifier.\"},{\"name\":\"ecosystem\",\"type\":\"VARCHAR\",\"description\":\"Adapter ecosystem.\"},{\"name\":\"endpoint\",\"type\":\"VARCHAR\",\"description\":\"Configured upstream URL.\"},{\"name\":\"authentication\",\"type\":\"VARCHAR\",\"description\":\"anonymous, auto, or required.\"},{\"name\":\"credential_configured\",\"type\":\"BOOLEAN\",\"description\":\"Whether the configuration references a credential; SQL secrets may also apply.\"},{\"name\":\"search_mode\",\"type\":\"VARCHAR\",\"description\":\"native or indexed search.\"},{\"name\":\"metadata\",\"type\":\"VARCHAR\",\"description\":\"Configured source boundaries as JSON.\"}]",
+        "vgi.title": "Sources"
+      },
+      null,
+      [],
+      [],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22608,
+      [
+        "SELECT source_id FROM packages.main.sources() ORDER BY source_id LIMIT 10"
+      ],
+      null,
+      []
+    ],
+    [
+      "packages",
+      "22595",
+      "main",
+      "source_status",
+      null,
+      "table",
+      "Inspect prepared index readiness, revisions, freshness and discovery boundaries",
+      null,
+      {
+        "vgi.category": "api",
+        "vgi.doc_llm": "Inspect prepared index readiness, revisions, freshness and discovery boundaries. One row per source_id describing search readiness. Join to sources using source_id for endpoint details. Indexed sources report the last committed snapshot, observation time, source revision, record count, checkpoint, declared coverage and completeness. complete means the declared input was exhausted, not ecosystem-wide coverage. Native readiness indicates adapter availability, not a remote health probe. Failed inspection produces ready=false and a safe error code. This relation is both a table and a zero-argument function. Result columns (nullable when upstream data is unavailable): source_id `VARCHAR`: Configured source identifier. ecosystem `VARCHAR`: Adapter ecosystem. ready `BOOLEAN`: Whether search can use the configured source. search_mode `VARCHAR`: native or indexed. complete `BOOLEAN`: Index input exhausted within declared boundaries; NULL for native search. coverage `VARCHAR`: Declared index scope. searched_fields `VARCHAR`: Indexed fields. snapshot_id `VARCHAR`: Unique identifier for the last atomically committed index refresh. source_revision `VARCHAR`: Upstream revision or checkpoint. observed_at `VARCHAR`: Last successful index refresh. records `BIGINT`: Stored metadata record count. checkpoint `VARCHAR`: Resume cursor for incremental feeds. stale `BOOLEAN`: Index older than configured freshness interval. error `VARCHAR`: Safe status error code if inspection failed.",
+        "vgi.doc_md": "One row per source_id describing search readiness. Join to sources using source_id for endpoint details. Indexed sources report the last committed snapshot, observation time, source revision, record count, checkpoint, declared coverage and completeness. complete means the declared input was exhausted, not ecosystem-wide coverage. Native readiness indicates adapter availability, not a remote health probe. Failed inspection produces ready=false and a safe error code. This relation is both a table and a zero-argument function.\n\n### Returned columns\n\nUnknown or inapplicable values are NULL.\n\n| Column | SQL type | Meaning |\n| --- | --- | --- |\n| source_id | `VARCHAR` | Configured source identifier. |\n| ecosystem | `VARCHAR` | Adapter ecosystem. |\n| ready | `BOOLEAN` | Whether search can use the configured source. |\n| search_mode | `VARCHAR` | native or indexed. |\n| complete | `BOOLEAN` | Index input exhausted within declared boundaries; NULL for native search. |\n| coverage | `VARCHAR` | Declared index scope. |\n| searched_fields | `VARCHAR` | Indexed fields. |\n| snapshot_id | `VARCHAR` | Unique identifier for the last atomically committed index refresh. |\n| source_revision | `VARCHAR` | Upstream revision or checkpoint. |\n| observed_at | `VARCHAR` | Last successful index refresh. |\n| records | `BIGINT` | Stored metadata record count. |\n| checkpoint | `VARCHAR` | Resume cursor for incremental feeds. |\n| stale | `BOOLEAN` | Index older than configured freshness interval. |\n| error | `VARCHAR` | Safe status error code if inspection failed. |",
+        "vgi.example_queries": "[{\"description\":\"Inspect prepared index readiness, revisions, freshness and discovery boundaries; inspect the first ten identities\",\"sql\":\"SELECT source_id, ready, search_mode FROM packages.main.source_status() ORDER BY source_id, ready, search_mode LIMIT 10\"}]",
+        "vgi.keywords": "[\"software\",\"registry\",\"package\",\"container\",\"metadata\",\"authentication\",\"search\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"source_id\",\"type\":\"VARCHAR\",\"description\":\"Configured source identifier.\"},{\"name\":\"ecosystem\",\"type\":\"VARCHAR\",\"description\":\"Adapter ecosystem.\"},{\"name\":\"ready\",\"type\":\"BOOLEAN\",\"description\":\"Whether search can use the configured source.\"},{\"name\":\"search_mode\",\"type\":\"VARCHAR\",\"description\":\"native or indexed.\"},{\"name\":\"complete\",\"type\":\"BOOLEAN\",\"description\":\"Index input exhausted within declared boundaries; NULL for native search.\"},{\"name\":\"coverage\",\"type\":\"VARCHAR\",\"description\":\"Declared index scope.\"},{\"name\":\"searched_fields\",\"type\":\"VARCHAR\",\"description\":\"Indexed fields.\"},{\"name\":\"snapshot_id\",\"type\":\"VARCHAR\",\"description\":\"Unique identifier for the last atomically committed index refresh.\"},{\"name\":\"source_revision\",\"type\":\"VARCHAR\",\"description\":\"Upstream revision or checkpoint.\"},{\"name\":\"observed_at\",\"type\":\"VARCHAR\",\"description\":\"Last successful index refresh.\"},{\"name\":\"records\",\"type\":\"BIGINT\",\"description\":\"Stored metadata record count.\"},{\"name\":\"checkpoint\",\"type\":\"VARCHAR\",\"description\":\"Resume cursor for incremental feeds.\"},{\"name\":\"stale\",\"type\":\"BOOLEAN\",\"description\":\"Index older than configured freshness interval.\"},{\"name\":\"error\",\"type\":\"VARCHAR\",\"description\":\"Safe status error code if inspection failed.\"}]",
+        "vgi.title": "Source Status"
+      },
+      null,
+      [],
+      [],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22607,
+      [
+        "SELECT source_id, ready, search_mode FROM packages.main.source_status() ORDER BY source_id, ready, search_mode LIMIT 10"
+      ],
+      null,
+      []
+    ],
+    [
+      "packages",
+      "22595",
+      "main",
+      "sequence_table",
+      null,
+      "table",
+      "Generate demo numeric rows of (n, squared), stepping n by step",
+      null,
+      {
+        "vgi.category": "generators",
+        "vgi.doc_llm": "Starter demonstration unrelated to package metadata. Both output columns are `BIGINT`; keep values within signed 64-bit range because Arrow integer conversion can wrap overflowing values. Generate a deterministic table of `count` rows with columns `n` and `squared`, where `n` runs 0, step, 2*step, and so on. `count` is positional (0 to 1,000,000); `step` is a named argument that defaults to 1. Rows stream back in batches, so large counts do not buffer in memory. A call with count 5 and step 2 returns n = 0, 2, 4, 6, 8.",
+        "vgi.doc_md": "## sequence_table(count, step := 1)\n\n`count` rows of `(n, squared)` with n = 0, step, 2*step, ...\n\nDeterministic starter demonstration, unrelated to package metadata. Both output columns are `BIGINT`. Keep n and squared within signed 64-bit range; Arrow integer conversion can wrap overflow.",
+        "vgi.example_queries": "[{\"description\":\"The first five values and their squares\",\"sql\":\"SELECT n, squared FROM packages.main.sequence_table(5) ORDER BY n\"},{\"description\":\"Four values stepping by ten\",\"sql\":\"SELECT n FROM packages.main.sequence_table(4, step := 10) ORDER BY n\"}]",
+        "vgi.executable_examples": "[{\"description\":\"Three rows stepping by two\",\"sql\":\"SELECT n, squared FROM packages.main.sequence_table(3, step := 2) ORDER BY n\",\"expected_result\":[[0,0],[2,4],[4,16]]},{\"description\":\"Count the rows generated\",\"sql\":\"SELECT count(*) AS rows FROM packages.main.sequence_table(1000)\",\"expected_result\":[[1000]]}]",
+        "vgi.keywords": "[\"sequence\",\"series\",\"range\",\"generate rows\",\"numbers\",\"squares\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"n\",\"type\":\"BIGINT\",\"description\":\"The generated value: row index times step.\"},{\"name\":\"squared\",\"type\":\"BIGINT\",\"description\":\"n multiplied by itself.\"}]",
+        "vgi.title": "Sequence Table"
+      },
+      null,
+      [
+        "count",
+        "step"
+      ],
+      [
+        "BIGINT",
+        "BIGINT"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22606,
+      [
+        "SELECT n, squared FROM packages.main.sequence_table(5) ORDER BY n",
+        "SELECT n FROM packages.main.sequence_table(4, step := 10) ORDER BY n"
+      ],
+      null,
+      []
+    ],
+    [
+      "packages",
+      "22595",
+      "main",
+      "package",
+      null,
+      "table",
+      "Read native package identity and descriptive metadata",
+      null,
+      {
+        "vgi.category": "api",
+        "vgi.doc_llm": "Read native package identity and descriptive metadata. Read descriptive metadata for one native package identity, normally one row. npm/PyPI/RubyGems use provider-selected current metadata; NuGet selects the last registration entry; prepared repositories expose one representative indexed package record. Maven names use groupId:artifactId and Go names preserve module-path case. Missing live packages raise NOT_FOUND; a missing indexed name returns zero rows. Use versions for the release inventory, artifacts for files, and dependencies for requirements. Result columns (nullable when upstream data is unavailable): source_id `VARCHAR`: Configured source identifier. ecosystem `VARCHAR`: Native package ecosystem or registry provider. name `VARCHAR`: Native package or repository identity, including its namespace. version `VARCHAR`: Original ecosystem version string; NULL where not applicable. description `VARCHAR`: Upstream summary where available. observed_at `VARCHAR`: UTC ISO timestamp when metadata was observed. snapshot_id `VARCHAR`: Prepared snapshot identifier; NULL for live requests. source_revision `VARCHAR`: Upstream revision or checkpoint when available. metadata `VARCHAR`: Sanitized JSON containing ecosystem-specific details. homepage `VARCHAR`: Upstream project homepage. repository `VARCHAR`: Upstream source code repository URL. license `VARCHAR`: Upstream license metadata, not an inferred license determination. platform `VARCHAR`: Platform or target system. architecture `VARCHAR`: Package architecture. build `VARCHAR`: Ecosystem build identifier. deprecated `VARCHAR`: Deprecation reason if supplied.",
+        "vgi.doc_md": "Read descriptive metadata for one native package identity, normally one row. npm/PyPI/RubyGems use provider-selected current metadata; NuGet selects the last registration entry; prepared repositories expose one representative indexed package record. Maven names use groupId:artifactId and Go names preserve module-path case. Missing live packages raise NOT_FOUND; a missing indexed name returns zero rows. Use versions for the release inventory, artifacts for files, and dependencies for requirements.\n\n### Returned columns\n\nUnknown or inapplicable values are NULL.\n\n| Column | SQL type | Meaning |\n| --- | --- | --- |\n| source_id | `VARCHAR` | Configured source identifier. |\n| ecosystem | `VARCHAR` | Native package ecosystem or registry provider. |\n| name | `VARCHAR` | Native package or repository identity, including its namespace. |\n| version | `VARCHAR` | Original ecosystem version string; NULL where not applicable. |\n| description | `VARCHAR` | Upstream summary where available. |\n| observed_at | `VARCHAR` | UTC ISO timestamp when metadata was observed. |\n| snapshot_id | `VARCHAR` | Prepared snapshot identifier; NULL for live requests. |\n| source_revision | `VARCHAR` | Upstream revision or checkpoint when available. |\n| metadata | `VARCHAR` | Sanitized JSON containing ecosystem-specific details. |\n| homepage | `VARCHAR` | Upstream project homepage. |\n| repository | `VARCHAR` | Upstream source code repository URL. |\n| license | `VARCHAR` | Upstream license metadata, not an inferred license determination. |\n| platform | `VARCHAR` | Platform or target system. |\n| architecture | `VARCHAR` | Package architecture. |\n| build | `VARCHAR` | Ecosystem build identifier. |\n| deprecated | `VARCHAR` | Deprecation reason if supplied. |",
+        "vgi.example_queries": "[{\"description\":\"Read native package identity and descriptive metadata; inspect the first ten identities\",\"sql\":\"SELECT name FROM packages.main.package('pypi_public', 'requests') ORDER BY name LIMIT 10\"}]",
+        "vgi.keywords": "[\"software\",\"registry\",\"package\",\"container\",\"metadata\",\"authentication\",\"search\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"source_id\",\"type\":\"VARCHAR\",\"description\":\"Configured source identifier.\"},{\"name\":\"ecosystem\",\"type\":\"VARCHAR\",\"description\":\"Native package ecosystem or registry provider.\"},{\"name\":\"name\",\"type\":\"VARCHAR\",\"description\":\"Native package or repository identity, including its namespace.\"},{\"name\":\"version\",\"type\":\"VARCHAR\",\"description\":\"Original ecosystem version string; NULL where not applicable.\"},{\"name\":\"description\",\"type\":\"VARCHAR\",\"description\":\"Upstream summary where available.\"},{\"name\":\"observed_at\",\"type\":\"VARCHAR\",\"description\":\"UTC ISO timestamp when metadata was observed.\"},{\"name\":\"snapshot_id\",\"type\":\"VARCHAR\",\"description\":\"Prepared snapshot identifier; NULL for live requests.\"},{\"name\":\"source_revision\",\"type\":\"VARCHAR\",\"description\":\"Upstream revision or checkpoint when available.\"},{\"name\":\"metadata\",\"type\":\"VARCHAR\",\"description\":\"Sanitized JSON containing ecosystem-specific details.\"},{\"name\":\"homepage\",\"type\":\"VARCHAR\",\"description\":\"Upstream project homepage.\"},{\"name\":\"repository\",\"type\":\"VARCHAR\",\"description\":\"Upstream source code repository URL.\"},{\"name\":\"license\",\"type\":\"VARCHAR\",\"description\":\"Upstream license metadata, not an inferred license determination.\"},{\"name\":\"platform\",\"type\":\"VARCHAR\",\"description\":\"Platform or target system.\"},{\"name\":\"architecture\",\"type\":\"VARCHAR\",\"description\":\"Package architecture.\"},{\"name\":\"build\",\"type\":\"VARCHAR\",\"description\":\"Ecosystem build identifier.\"},{\"name\":\"deprecated\",\"type\":\"VARCHAR\",\"description\":\"Deprecation reason if supplied.\"}]",
+        "vgi.title": "Package"
+      },
+      null,
+      [
+        "source_id",
+        "package_name",
+        "max_results"
+      ],
+      [
+        "VARCHAR",
+        "VARCHAR",
+        "BIGINT"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22604,
+      [
+        "SELECT name FROM packages.main.package('pypi_public', 'requests') ORDER BY name LIMIT 10"
+      ],
+      null,
+      []
+    ],
+    [
+      "packages",
+      "22595",
+      "main",
+      "search",
+      null,
+      "table",
+      "Search package or image repository metadata within an explicit source and row budget",
+      null,
+      {
+        "vgi.category": "api",
+        "vgi.doc_llm": "Search package or image repository metadata within an explicit source and row budget. Find package names or image repositories before requesting their detailed metadata. Native search keeps provider ranking; scores are provider-specific and nullable. Prepared indexes use case-insensitive substring matching and deterministic name order. PyPI and Go search names; other prepared indexes include descriptions. Inspect source_status before indexed search. The explicit row budget caps output without an additional truncation flag; coverage and complete describe the index input, not the result count. Result columns (nullable when upstream data is unavailable): source_id `VARCHAR`: Configured source identifier. ecosystem `VARCHAR`: Native package ecosystem or registry provider. name `VARCHAR`: Native package or repository identity, including its namespace. version `VARCHAR`: Original ecosystem version string; NULL where not applicable. description `VARCHAR`: Upstream summary where available. observed_at `VARCHAR`: UTC ISO timestamp when metadata was observed. snapshot_id `VARCHAR`: Prepared snapshot identifier; NULL for live requests. source_revision `VARCHAR`: Upstream revision or checkpoint when available. metadata `VARCHAR`: Sanitized JSON containing ecosystem-specific details. score `DOUBLE`: Provider relevance score; scores are not comparable across providers. stars `BIGINT`: Provider star count when available. pulls `BIGINT`: Provider pull count when available. official `BOOLEAN`: Provider designation of an official repository, when available. url `VARCHAR`: Public package or repository URL. search_mode `VARCHAR`: native provider search or indexed snapshot. coverage `VARCHAR`: Prepared index source boundaries as JSON. complete `BOOLEAN`: Whether indexing reached the end of the declared input scope.",
+        "vgi.doc_md": "Find package names or image repositories before requesting their detailed metadata. Native search keeps provider ranking; scores are provider-specific and nullable. Prepared indexes use case-insensitive substring matching and deterministic name order. PyPI and Go search names; other prepared indexes include descriptions. Inspect source_status before indexed search. The explicit row budget caps output without an additional truncation flag; coverage and complete describe the index input, not the result count.\n\n### Returned columns\n\nUnknown or inapplicable values are NULL.\n\n| Column | SQL type | Meaning |\n| --- | --- | --- |\n| source_id | `VARCHAR` | Configured source identifier. |\n| ecosystem | `VARCHAR` | Native package ecosystem or registry provider. |\n| name | `VARCHAR` | Native package or repository identity, including its namespace. |\n| version | `VARCHAR` | Original ecosystem version string; NULL where not applicable. |\n| description | `VARCHAR` | Upstream summary where available. |\n| observed_at | `VARCHAR` | UTC ISO timestamp when metadata was observed. |\n| snapshot_id | `VARCHAR` | Prepared snapshot identifier; NULL for live requests. |\n| source_revision | `VARCHAR` | Upstream revision or checkpoint when available. |\n| metadata | `VARCHAR` | Sanitized JSON containing ecosystem-specific details. |\n| score | `DOUBLE` | Provider relevance score; scores are not comparable across providers. |\n| stars | `BIGINT` | Provider star count when available. |\n| pulls | `BIGINT` | Provider pull count when available. |\n| official | `BOOLEAN` | Provider designation of an official repository, when available. |\n| url | `VARCHAR` | Public package or repository URL. |\n| search_mode | `VARCHAR` | native provider search or indexed snapshot. |\n| coverage | `VARCHAR` | Prepared index source boundaries as JSON. |\n| complete | `BOOLEAN` | Whether indexing reached the end of the declared input scope. |",
+        "vgi.example_queries": "[{\"description\":\"Search package or image repository metadata within an explicit source and row budget; inspect the first ten identities\",\"sql\":\"SELECT name FROM packages.main.search('npm_public', 'arrow', 25) ORDER BY name LIMIT 10\"}]",
+        "vgi.keywords": "[\"software\",\"registry\",\"package\",\"container\",\"metadata\",\"authentication\",\"search\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"source_id\",\"type\":\"VARCHAR\",\"description\":\"Configured source identifier.\"},{\"name\":\"ecosystem\",\"type\":\"VARCHAR\",\"description\":\"Native package ecosystem or registry provider.\"},{\"name\":\"name\",\"type\":\"VARCHAR\",\"description\":\"Native package or repository identity, including its namespace.\"},{\"name\":\"version\",\"type\":\"VARCHAR\",\"description\":\"Original ecosystem version string; NULL where not applicable.\"},{\"name\":\"description\",\"type\":\"VARCHAR\",\"description\":\"Upstream summary where available.\"},{\"name\":\"observed_at\",\"type\":\"VARCHAR\",\"description\":\"UTC ISO timestamp when metadata was observed.\"},{\"name\":\"snapshot_id\",\"type\":\"VARCHAR\",\"description\":\"Prepared snapshot identifier; NULL for live requests.\"},{\"name\":\"source_revision\",\"type\":\"VARCHAR\",\"description\":\"Upstream revision or checkpoint when available.\"},{\"name\":\"metadata\",\"type\":\"VARCHAR\",\"description\":\"Sanitized JSON containing ecosystem-specific details.\"},{\"name\":\"score\",\"type\":\"DOUBLE\",\"description\":\"Provider relevance score; scores are not comparable across providers.\"},{\"name\":\"stars\",\"type\":\"BIGINT\",\"description\":\"Provider star count when available.\"},{\"name\":\"pulls\",\"type\":\"BIGINT\",\"description\":\"Provider pull count when available.\"},{\"name\":\"official\",\"type\":\"BOOLEAN\",\"description\":\"Provider designation of an official repository, when available.\"},{\"name\":\"url\",\"type\":\"VARCHAR\",\"description\":\"Public package or repository URL.\"},{\"name\":\"search_mode\",\"type\":\"VARCHAR\",\"description\":\"native provider search or indexed snapshot.\"},{\"name\":\"coverage\",\"type\":\"VARCHAR\",\"description\":\"Prepared index source boundaries as JSON.\"},{\"name\":\"complete\",\"type\":\"BOOLEAN\",\"description\":\"Whether indexing reached the end of the declared input scope.\"}]",
+        "vgi.title": "Search"
+      },
+      null,
+      [
+        "source_id",
+        "query",
+        "max_results"
+      ],
+      [
+        "VARCHAR",
+        "VARCHAR",
+        "BIGINT"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22605,
+      [
+        "SELECT name FROM packages.main.search('npm_public', 'arrow', 25) ORDER BY name LIMIT 10"
+      ],
+      null,
+      []
+    ],
+    [
+      "packages",
+      "22595",
+      "main",
+      "fetch_items",
+      null,
+      "table",
+      "Read every item from a paginated REST API, one page per batch",
+      null,
+      {
+        "vgi.category": "api",
+        "vgi.doc_llm": "Read all items from a paginated JSON REST API at `base_url` and return them as rows `(id, name, category, price)`. Pages are requested `page_size` at a time (named argument, default 100) and streamed to DuckDB as they arrive. If a DuckDB secret of type `packages_api` exists its `token` is sent as a bearer token; otherwise the `PACKAGES_API_TOKEN` environment variable is used. Rate-limit (429) and server errors are retried with backoff.",
+        "vgi.doc_md": "## fetch_items(base_url, page_size := 100)\n\nEvery item from a paginated REST API, streamed one page per batch.\n\nAuthenticate with a `packages_api` secret or the `PACKAGES_API_TOKEN` environment variable:\n\n```sql\nCREATE SECRET (TYPE packages_api, TOKEN 'your-token');\n```",
+        "vgi.example_queries": "[{\"description\":\"The five priciest hardware items from the public demo API\",\"sql\":\"SELECT id, name, price FROM packages.main.fetch_items('https://vgi-starter-api.query-farm.services/v1') WHERE category = 'hardware' ORDER BY price DESC LIMIT 5\"},{\"description\":\"Summarize the API's items by category, ten per request\",\"sql\":\"SELECT category, count(*) AS items, avg(price) AS avg_price FROM packages.main.fetch_items('https://vgi-starter-api.query-farm.services/v1', page_size := 10) GROUP BY category ORDER BY category\"}]",
+        "vgi.keywords": "[\"rest api\",\"http\",\"pagination\",\"fetch\",\"items\",\"json api\",\"bearer token\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"id\",\"type\":\"BIGINT\",\"description\":\"Item identifier assigned by the API.\"},{\"name\":\"name\",\"type\":\"VARCHAR\",\"description\":\"Item display name.\"},{\"name\":\"category\",\"type\":\"VARCHAR\",\"description\":\"Item category, e.g. 'hardware'.\"},{\"name\":\"price\",\"type\":\"DOUBLE\",\"description\":\"Item price in US dollars.\"}]",
+        "vgi.title": "Fetch Items From API"
+      },
+      null,
+      [
+        "base_url",
+        "page_size"
+      ],
+      [
+        "VARCHAR",
+        "BIGINT"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22603,
+      [
+        "SELECT id, name, price FROM packages.main.fetch_items('https://vgi-starter-api.query-farm.services/v1') WHERE category = 'hardware' ORDER BY price DESC LIMIT 5",
+        "SELECT category, count(*) AS items, avg(price) AS avg_price FROM packages.main.fetch_items('https://vgi-starter-api.query-farm.services/v1', page_size := 10) GROUP BY category ORDER BY category"
+      ],
+      null,
+      []
+    ],
+    [
+      "packages",
+      "22595",
+      "main",
+      "dependencies",
+      null,
+      "table",
+      "Read declared dependency requirements and their native conditions",
+      null,
+      {
+        "vgi.category": "api",
+        "vgi.doc_llm": "Read declared dependency requirements and their native conditions. One row per declared requirement of an exact package version. dependency identifies the target or capability; requirement retains the ecosystem expression; kind preserves dependency category; condition holds markers, frameworks or platform restrictions when available. metadata preserves additional native details such as features and optional flags. Declarations are not a solved installation graph. Maven parent/BOM properties can remain unresolved and PyPI per-file metadata can differ. nixpkgs dependencies are explicitly unsupported. Choose a release from versions first. Result columns (nullable when upstream data is unavailable): source_id `VARCHAR`: Configured source identifier. ecosystem `VARCHAR`: Native package ecosystem or registry provider. name `VARCHAR`: Native package or repository identity, including its namespace. version `VARCHAR`: Original ecosystem version string; NULL where not applicable. description `VARCHAR`: Upstream summary where available. observed_at `VARCHAR`: UTC ISO timestamp when metadata was observed. snapshot_id `VARCHAR`: Prepared snapshot identifier; NULL for live requests. source_revision `VARCHAR`: Upstream revision or checkpoint when available. metadata `VARCHAR`: Sanitized JSON containing ecosystem-specific details. dependency `VARCHAR`: Target package identity or capability. requirement `VARCHAR`: Native dependency requirement expression. kind `VARCHAR`: Native dependency category. condition `VARCHAR`: Platform, feature, framework or environment condition. declaration_context `VARCHAR`: Where the dependency was declared; no universal resolution is implied.",
+        "vgi.doc_md": "One row per declared requirement of an exact package version. dependency identifies the target or capability; requirement retains the ecosystem expression; kind preserves dependency category; condition holds markers, frameworks or platform restrictions when available. metadata preserves additional native details such as features and optional flags. Declarations are not a solved installation graph. Maven parent/BOM properties can remain unresolved and PyPI per-file metadata can differ. nixpkgs dependencies are explicitly unsupported. Choose a release from versions first.\n\n### Returned columns\n\nUnknown or inapplicable values are NULL.\n\n| Column | SQL type | Meaning |\n| --- | --- | --- |\n| source_id | `VARCHAR` | Configured source identifier. |\n| ecosystem | `VARCHAR` | Native package ecosystem or registry provider. |\n| name | `VARCHAR` | Native package or repository identity, including its namespace. |\n| version | `VARCHAR` | Original ecosystem version string; NULL where not applicable. |\n| description | `VARCHAR` | Upstream summary where available. |\n| observed_at | `VARCHAR` | UTC ISO timestamp when metadata was observed. |\n| snapshot_id | `VARCHAR` | Prepared snapshot identifier; NULL for live requests. |\n| source_revision | `VARCHAR` | Upstream revision or checkpoint when available. |\n| metadata | `VARCHAR` | Sanitized JSON containing ecosystem-specific details. |\n| dependency | `VARCHAR` | Target package identity or capability. |\n| requirement | `VARCHAR` | Native dependency requirement expression. |\n| kind | `VARCHAR` | Native dependency category. |\n| condition | `VARCHAR` | Platform, feature, framework or environment condition. |\n| declaration_context | `VARCHAR` | Where the dependency was declared; no universal resolution is implied. |",
+        "vgi.example_queries": "[{\"description\":\"Read declared dependency requirements and their native conditions; inspect the first ten identities\",\"sql\":\"SELECT dependency, requirement, condition FROM packages.main.dependencies('pypi_public', 'requests', '2.32.3') ORDER BY dependency, requirement, condition LIMIT 10\"}]",
+        "vgi.keywords": "[\"software\",\"registry\",\"package\",\"container\",\"metadata\",\"authentication\",\"search\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"source_id\",\"type\":\"VARCHAR\",\"description\":\"Configured source identifier.\"},{\"name\":\"ecosystem\",\"type\":\"VARCHAR\",\"description\":\"Native package ecosystem or registry provider.\"},{\"name\":\"name\",\"type\":\"VARCHAR\",\"description\":\"Native package or repository identity, including its namespace.\"},{\"name\":\"version\",\"type\":\"VARCHAR\",\"description\":\"Original ecosystem version string; NULL where not applicable.\"},{\"name\":\"description\",\"type\":\"VARCHAR\",\"description\":\"Upstream summary where available.\"},{\"name\":\"observed_at\",\"type\":\"VARCHAR\",\"description\":\"UTC ISO timestamp when metadata was observed.\"},{\"name\":\"snapshot_id\",\"type\":\"VARCHAR\",\"description\":\"Prepared snapshot identifier; NULL for live requests.\"},{\"name\":\"source_revision\",\"type\":\"VARCHAR\",\"description\":\"Upstream revision or checkpoint when available.\"},{\"name\":\"metadata\",\"type\":\"VARCHAR\",\"description\":\"Sanitized JSON containing ecosystem-specific details.\"},{\"name\":\"dependency\",\"type\":\"VARCHAR\",\"description\":\"Target package identity or capability.\"},{\"name\":\"requirement\",\"type\":\"VARCHAR\",\"description\":\"Native dependency requirement expression.\"},{\"name\":\"kind\",\"type\":\"VARCHAR\",\"description\":\"Native dependency category.\"},{\"name\":\"condition\",\"type\":\"VARCHAR\",\"description\":\"Platform, feature, framework or environment condition.\"},{\"name\":\"declaration_context\",\"type\":\"VARCHAR\",\"description\":\"Where the dependency was declared; no universal resolution is implied.\"}]",
+        "vgi.title": "Dependencies"
+      },
+      null,
+      [
+        "source_id",
+        "package_name",
+        "version",
+        "max_results"
+      ],
+      [
+        "VARCHAR",
+        "VARCHAR",
+        "VARCHAR",
+        "BIGINT"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22602,
+      [
+        "SELECT dependency, requirement, condition FROM packages.main.dependencies('pypi_public', 'requests', '2.32.3') ORDER BY dependency, requirement, condition LIMIT 10"
+      ],
+      null,
+      []
+    ],
+    [
+      "packages",
+      "22595",
+      "main",
+      "versions",
+      null,
+      "table",
+      "List versions available in the configured registry or prepared snapshot",
+      null,
+      {
+        "vgi.category": "api",
+        "vgi.doc_llm": "List versions available in the configured registry or prepared snapshot. List original version strings and available publication, platform, build, yanked and deprecation fields. Unknown provider fields are NULL. Order follows provider metadata or the prepared snapshot and is not a universal newest-first ordering. Use the returned version strings verbatim for artifacts and dependencies. Prepared repositories expose releases present in their configured snapshot, not complete historical archives. Output is capped by the row budget without a separate truncation flag. Result columns (nullable when upstream data is unavailable): source_id `VARCHAR`: Configured source identifier. ecosystem `VARCHAR`: Native package ecosystem or registry provider. name `VARCHAR`: Native package or repository identity, including its namespace. version `VARCHAR`: Original ecosystem version string; NULL where not applicable. description `VARCHAR`: Upstream summary where available. observed_at `VARCHAR`: UTC ISO timestamp when metadata was observed. snapshot_id `VARCHAR`: Prepared snapshot identifier; NULL for live requests. source_revision `VARCHAR`: Upstream revision or checkpoint when available. metadata `VARCHAR`: Sanitized JSON containing ecosystem-specific details. published_at `VARCHAR`: Upstream publication time, distinct from observation time. platform `VARCHAR`: Native platform variant. architecture `VARCHAR`: Package architecture. build `VARCHAR`: Build identifier. yanked `BOOLEAN`: Upstream yanked status, NULL when unknown. deprecated `VARCHAR`: Upstream deprecation reason. license `VARCHAR`: License metadata if present.",
+        "vgi.doc_md": "List original version strings and available publication, platform, build, yanked and deprecation fields. Unknown provider fields are NULL. Order follows provider metadata or the prepared snapshot and is not a universal newest-first ordering. Use the returned version strings verbatim for artifacts and dependencies. Prepared repositories expose releases present in their configured snapshot, not complete historical archives. Output is capped by the row budget without a separate truncation flag.\n\n### Returned columns\n\nUnknown or inapplicable values are NULL.\n\n| Column | SQL type | Meaning |\n| --- | --- | --- |\n| source_id | `VARCHAR` | Configured source identifier. |\n| ecosystem | `VARCHAR` | Native package ecosystem or registry provider. |\n| name | `VARCHAR` | Native package or repository identity, including its namespace. |\n| version | `VARCHAR` | Original ecosystem version string; NULL where not applicable. |\n| description | `VARCHAR` | Upstream summary where available. |\n| observed_at | `VARCHAR` | UTC ISO timestamp when metadata was observed. |\n| snapshot_id | `VARCHAR` | Prepared snapshot identifier; NULL for live requests. |\n| source_revision | `VARCHAR` | Upstream revision or checkpoint when available. |\n| metadata | `VARCHAR` | Sanitized JSON containing ecosystem-specific details. |\n| published_at | `VARCHAR` | Upstream publication time, distinct from observation time. |\n| platform | `VARCHAR` | Native platform variant. |\n| architecture | `VARCHAR` | Package architecture. |\n| build | `VARCHAR` | Build identifier. |\n| yanked | `BOOLEAN` | Upstream yanked status, NULL when unknown. |\n| deprecated | `VARCHAR` | Upstream deprecation reason. |\n| license | `VARCHAR` | License metadata if present. |",
+        "vgi.example_queries": "[{\"description\":\"List versions available in the configured registry or prepared snapshot; inspect the first ten identities\",\"sql\":\"SELECT version, published_at FROM packages.main.versions('pypi_public', 'requests') ORDER BY version, published_at LIMIT 10\"}]",
+        "vgi.keywords": "[\"software\",\"registry\",\"package\",\"container\",\"metadata\",\"authentication\",\"search\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"source_id\",\"type\":\"VARCHAR\",\"description\":\"Configured source identifier.\"},{\"name\":\"ecosystem\",\"type\":\"VARCHAR\",\"description\":\"Native package ecosystem or registry provider.\"},{\"name\":\"name\",\"type\":\"VARCHAR\",\"description\":\"Native package or repository identity, including its namespace.\"},{\"name\":\"version\",\"type\":\"VARCHAR\",\"description\":\"Original ecosystem version string; NULL where not applicable.\"},{\"name\":\"description\",\"type\":\"VARCHAR\",\"description\":\"Upstream summary where available.\"},{\"name\":\"observed_at\",\"type\":\"VARCHAR\",\"description\":\"UTC ISO timestamp when metadata was observed.\"},{\"name\":\"snapshot_id\",\"type\":\"VARCHAR\",\"description\":\"Prepared snapshot identifier; NULL for live requests.\"},{\"name\":\"source_revision\",\"type\":\"VARCHAR\",\"description\":\"Upstream revision or checkpoint when available.\"},{\"name\":\"metadata\",\"type\":\"VARCHAR\",\"description\":\"Sanitized JSON containing ecosystem-specific details.\"},{\"name\":\"published_at\",\"type\":\"VARCHAR\",\"description\":\"Upstream publication time, distinct from observation time.\"},{\"name\":\"platform\",\"type\":\"VARCHAR\",\"description\":\"Native platform variant.\"},{\"name\":\"architecture\",\"type\":\"VARCHAR\",\"description\":\"Package architecture.\"},{\"name\":\"build\",\"type\":\"VARCHAR\",\"description\":\"Build identifier.\"},{\"name\":\"yanked\",\"type\":\"BOOLEAN\",\"description\":\"Upstream yanked status, NULL when unknown.\"},{\"name\":\"deprecated\",\"type\":\"VARCHAR\",\"description\":\"Upstream deprecation reason.\"},{\"name\":\"license\",\"type\":\"VARCHAR\",\"description\":\"License metadata if present.\"}]",
+        "vgi.title": "Versions"
+      },
+      null,
+      [
+        "source_id",
+        "package_name",
+        "max_results"
+      ],
+      [
+        "VARCHAR",
+        "VARCHAR",
+        "BIGINT"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22609,
+      [
+        "SELECT version, published_at FROM packages.main.versions('pypi_public', 'requests') ORDER BY version, published_at LIMIT 10"
+      ],
+      null,
+      []
+    ],
+    [
+      "packages",
+      "22595",
+      "main",
+      "capabilities",
+      null,
+      "table",
+      "Inspect supported source operations and native or indexed search coverage",
+      null,
+      {
+        "vgi.category": "api",
+        "vgi.doc_llm": "Inspect supported source operations and native or indexed search coverage. One row per source_id and operation. Join this relation to sources using source_id to obtain the endpoint and authentication settings. supported reports adapter support even when an index has not been prepared. Package operations are search, package, versions, artifacts and dependencies; container operations are search, repository, tags, manifest, platforms, layers and configuration. searched_fields is a comma-separated list for search and NULL for other operations. Inspect description for operation-specific limits. This relation is both a table and a zero-argument function. Result columns (nullable when upstream data is unavailable): source_id `VARCHAR`: Configured source identifier. ecosystem `VARCHAR`: Adapter ecosystem. operation `VARCHAR`: Operation name. supported `BOOLEAN`: Whether this adapter supports the operation. search_mode `VARCHAR`: native or indexed for search. searched_fields `VARCHAR`: Fields included in search. authentication `VARCHAR`: Configured authentication mode. description `VARCHAR`: Operation constraints.",
+        "vgi.doc_md": "One row per source_id and operation. Join this relation to sources using source_id to obtain the endpoint and authentication settings. supported reports adapter support even when an index has not been prepared. Package operations are search, package, versions, artifacts and dependencies; container operations are search, repository, tags, manifest, platforms, layers and configuration. searched_fields is a comma-separated list for search and NULL for other operations. Inspect description for operation-specific limits. This relation is both a table and a zero-argument function.\n\n### Returned columns\n\nUnknown or inapplicable values are NULL.\n\n| Column | SQL type | Meaning |\n| --- | --- | --- |\n| source_id | `VARCHAR` | Configured source identifier. |\n| ecosystem | `VARCHAR` | Adapter ecosystem. |\n| operation | `VARCHAR` | Operation name. |\n| supported | `BOOLEAN` | Whether this adapter supports the operation. |\n| search_mode | `VARCHAR` | native or indexed for search. |\n| searched_fields | `VARCHAR` | Fields included in search. |\n| authentication | `VARCHAR` | Configured authentication mode. |\n| description | `VARCHAR` | Operation constraints. |",
+        "vgi.example_queries": "[{\"description\":\"Inspect supported source operations and native or indexed search coverage; inspect the first ten identities\",\"sql\":\"SELECT source_id, operation, supported FROM packages.main.capabilities() ORDER BY source_id, operation, supported LIMIT 10\"}]",
+        "vgi.keywords": "[\"software\",\"registry\",\"package\",\"container\",\"metadata\",\"authentication\",\"search\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"source_id\",\"type\":\"VARCHAR\",\"description\":\"Configured source identifier.\"},{\"name\":\"ecosystem\",\"type\":\"VARCHAR\",\"description\":\"Adapter ecosystem.\"},{\"name\":\"operation\",\"type\":\"VARCHAR\",\"description\":\"Operation name.\"},{\"name\":\"supported\",\"type\":\"BOOLEAN\",\"description\":\"Whether this adapter supports the operation.\"},{\"name\":\"search_mode\",\"type\":\"VARCHAR\",\"description\":\"native or indexed for search.\"},{\"name\":\"searched_fields\",\"type\":\"VARCHAR\",\"description\":\"Fields included in search.\"},{\"name\":\"authentication\",\"type\":\"VARCHAR\",\"description\":\"Configured authentication mode.\"},{\"name\":\"description\",\"type\":\"VARCHAR\",\"description\":\"Operation constraints.\"}]",
+        "vgi.title": "Capabilities"
+      },
+      null,
+      [],
+      [],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22601,
+      [
+        "SELECT source_id, operation, supported FROM packages.main.capabilities() ORDER BY source_id, operation, supported LIMIT 10"
+      ],
+      null,
+      []
+    ],
+    [
+      "packages",
+      "22595",
+      "main",
+      "artifacts",
+      null,
+      "table",
+      "Inspect release artifact locations, platforms and upstream checksums",
+      null,
+      {
+        "vgi.category": "api",
+        "vgi.doc_llm": "Inspect release artifact locations, platforms and upstream checksums. Inspect files or Nix outputs for an exact package release. Rows include native filenames, artifact types, platforms, upstream size when available, URLs and hashes JSON keyed by the upstream algorithm or integrity field. Checksums are reported metadata; artifact bytes are not downloaded or verified here. URL credentials and query parameters are stripped. Maven returns the POM and packaging artifact, not every classifier. Nix store paths do not imply binary-cache availability. Result columns (nullable when upstream data is unavailable): source_id `VARCHAR`: Configured source identifier. ecosystem `VARCHAR`: Native package ecosystem or registry provider. name `VARCHAR`: Native package or repository identity, including its namespace. version `VARCHAR`: Original ecosystem version string; NULL where not applicable. description `VARCHAR`: Upstream summary where available. observed_at `VARCHAR`: UTC ISO timestamp when metadata was observed. snapshot_id `VARCHAR`: Prepared snapshot identifier; NULL for live requests. source_revision `VARCHAR`: Upstream revision or checkpoint when available. metadata `VARCHAR`: Sanitized JSON containing ecosystem-specific details. filename `VARCHAR`: Artifact filename or output name. url `VARCHAR`: Artifact URL with sensitive query parameters removed. hashes `VARCHAR`: Upstream checksum or integrity fields as JSON. size `BIGINT`: Upstream size in bytes, where provided. artifact_type `VARCHAR`: Native artifact format or output kind. platform `VARCHAR`: Platform variant. architecture `VARCHAR`: Native package architecture. build `VARCHAR`: Build identifier. yanked `BOOLEAN`: Whether this particular file was yanked. store_path `VARCHAR`: Nix output store path; this does not imply binary availability.",
+        "vgi.doc_md": "Inspect files or Nix outputs for an exact package release. Rows include native filenames, artifact types, platforms, upstream size when available, URLs and hashes JSON keyed by the upstream algorithm or integrity field. Checksums are reported metadata; artifact bytes are not downloaded or verified here. URL credentials and query parameters are stripped. Maven returns the POM and packaging artifact, not every classifier. Nix store paths do not imply binary-cache availability.\n\n### Returned columns\n\nUnknown or inapplicable values are NULL.\n\n| Column | SQL type | Meaning |\n| --- | --- | --- |\n| source_id | `VARCHAR` | Configured source identifier. |\n| ecosystem | `VARCHAR` | Native package ecosystem or registry provider. |\n| name | `VARCHAR` | Native package or repository identity, including its namespace. |\n| version | `VARCHAR` | Original ecosystem version string; NULL where not applicable. |\n| description | `VARCHAR` | Upstream summary where available. |\n| observed_at | `VARCHAR` | UTC ISO timestamp when metadata was observed. |\n| snapshot_id | `VARCHAR` | Prepared snapshot identifier; NULL for live requests. |\n| source_revision | `VARCHAR` | Upstream revision or checkpoint when available. |\n| metadata | `VARCHAR` | Sanitized JSON containing ecosystem-specific details. |\n| filename | `VARCHAR` | Artifact filename or output name. |\n| url | `VARCHAR` | Artifact URL with sensitive query parameters removed. |\n| hashes | `VARCHAR` | Upstream checksum or integrity fields as JSON. |\n| size | `BIGINT` | Upstream size in bytes, where provided. |\n| artifact_type | `VARCHAR` | Native artifact format or output kind. |\n| platform | `VARCHAR` | Platform variant. |\n| architecture | `VARCHAR` | Native package architecture. |\n| build | `VARCHAR` | Build identifier. |\n| yanked | `BOOLEAN` | Whether this particular file was yanked. |\n| store_path | `VARCHAR` | Nix output store path; this does not imply binary availability. |",
+        "vgi.example_queries": "[{\"description\":\"Inspect release artifact locations, platforms and upstream checksums; inspect the first ten identities\",\"sql\":\"SELECT filename, artifact_type, hashes FROM packages.main.artifacts('pypi_public', 'requests', '2.32.3') ORDER BY filename, artifact_type, hashes LIMIT 10\"}]",
+        "vgi.keywords": "[\"software\",\"registry\",\"package\",\"container\",\"metadata\",\"authentication\",\"search\"]",
+        "vgi.result_columns_schema": "[{\"name\":\"source_id\",\"type\":\"VARCHAR\",\"description\":\"Configured source identifier.\"},{\"name\":\"ecosystem\",\"type\":\"VARCHAR\",\"description\":\"Native package ecosystem or registry provider.\"},{\"name\":\"name\",\"type\":\"VARCHAR\",\"description\":\"Native package or repository identity, including its namespace.\"},{\"name\":\"version\",\"type\":\"VARCHAR\",\"description\":\"Original ecosystem version string; NULL where not applicable.\"},{\"name\":\"description\",\"type\":\"VARCHAR\",\"description\":\"Upstream summary where available.\"},{\"name\":\"observed_at\",\"type\":\"VARCHAR\",\"description\":\"UTC ISO timestamp when metadata was observed.\"},{\"name\":\"snapshot_id\",\"type\":\"VARCHAR\",\"description\":\"Prepared snapshot identifier; NULL for live requests.\"},{\"name\":\"source_revision\",\"type\":\"VARCHAR\",\"description\":\"Upstream revision or checkpoint when available.\"},{\"name\":\"metadata\",\"type\":\"VARCHAR\",\"description\":\"Sanitized JSON containing ecosystem-specific details.\"},{\"name\":\"filename\",\"type\":\"VARCHAR\",\"description\":\"Artifact filename or output name.\"},{\"name\":\"url\",\"type\":\"VARCHAR\",\"description\":\"Artifact URL with sensitive query parameters removed.\"},{\"name\":\"hashes\",\"type\":\"VARCHAR\",\"description\":\"Upstream checksum or integrity fields as JSON.\"},{\"name\":\"size\",\"type\":\"BIGINT\",\"description\":\"Upstream size in bytes, where provided.\"},{\"name\":\"artifact_type\",\"type\":\"VARCHAR\",\"description\":\"Native artifact format or output kind.\"},{\"name\":\"platform\",\"type\":\"VARCHAR\",\"description\":\"Platform variant.\"},{\"name\":\"architecture\",\"type\":\"VARCHAR\",\"description\":\"Native package architecture.\"},{\"name\":\"build\",\"type\":\"VARCHAR\",\"description\":\"Build identifier.\"},{\"name\":\"yanked\",\"type\":\"BOOLEAN\",\"description\":\"Whether this particular file was yanked.\"},{\"name\":\"store_path\",\"type\":\"VARCHAR\",\"description\":\"Nix output store path; this does not imply binary availability.\"}]",
+        "vgi.title": "Artifacts"
+      },
+      null,
+      [
+        "source_id",
+        "package_name",
+        "version",
+        "max_results"
+      ],
+      [
+        "VARCHAR",
+        "VARCHAR",
+        "VARCHAR",
+        "BIGINT"
+      ],
+      null,
+      null,
+      null,
+      true,
+      null,
+      22600,
+      [
+        "SELECT filename, artifact_type, hashes FROM packages.main.artifacts('pypi_public', 'requests', '2.32.3') ORDER BY filename, artifact_type, hashes LIMIT 10"
+      ],
+      null,
+      []
+    ],
+    [
+      "packages",
+      "22595",
+      "main",
+      "greet",
+      null,
+      "scalar",
+      "Greet a name casually: greet('Ada') returns 'Hi, Ada!'",
+      null,
+      {
+        "vgi.category": "text",
+        "vgi.doc_llm": "Return a greeting for each input name in the requested tone. `style` must be a constant, either 'casual' (Ada becomes 'Hi, Ada!') or 'formal' (Ada becomes 'Good day, Ada.'); any other value is rejected when the query is planned. NULL names produce NULL.",
+        "vgi.doc_md": "## greet(name, style)\n\nA greeting in the chosen tone: 'casual' or 'formal'.\n\nFormally, Ada becomes 'Good day, Ada.'",
+        "vgi.example_queries": "[{\"description\":\"Greet one name casually\",\"sql\":\"SELECT packages.main.greet('Ada') AS greeting\"},{\"description\":\"Greet one name formally\",\"sql\":\"SELECT packages.main.greet('Ada', 'formal') AS greeting\"}]",
+        "vgi.keywords": "[\"greet\",\"greeting\",\"formal greeting\",\"casual greeting\",\"salutation\",\"tone\"]",
+        "vgi.title": "Greet (with tone)"
+      },
+      "VARCHAR",
+      [
+        "name"
+      ],
+      [
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22599,
+      [
+        "SELECT packages.main.greet('Ada') AS greeting"
+      ],
+      "CONSISTENT",
+      []
+    ],
+    [
+      "packages",
+      "22595",
+      "main",
+      "greet",
+      null,
+      "scalar",
+      "Greet a name in a chosen tone: greet('Ada', 'formal') returns 'Good day, Ada.'",
+      null,
+      {
+        "vgi.category": "text",
+        "vgi.doc_llm": "Return a greeting for each input name in the requested tone. `style` must be a constant, either 'casual' (Ada becomes 'Hi, Ada!') or 'formal' (Ada becomes 'Good day, Ada.'); any other value is rejected when the query is planned. NULL names produce NULL.",
+        "vgi.doc_md": "## greet(name, style)\n\nA greeting in the chosen tone: 'casual' or 'formal'.\n\nFormally, Ada becomes 'Good day, Ada.'",
+        "vgi.example_queries": "[{\"description\":\"Greet one name casually\",\"sql\":\"SELECT packages.main.greet('Ada') AS greeting\"},{\"description\":\"Greet one name formally\",\"sql\":\"SELECT packages.main.greet('Ada', 'formal') AS greeting\"}]",
+        "vgi.keywords": "[\"greet\",\"greeting\",\"formal greeting\",\"casual greeting\",\"salutation\",\"tone\"]",
+        "vgi.title": "Greet (with tone)"
+      },
+      "VARCHAR",
+      [
+        "name",
+        "style"
+      ],
+      [
+        "VARCHAR",
+        "VARCHAR"
+      ],
+      null,
+      null,
+      false,
+      true,
+      null,
+      22599,
+      [
+        "SELECT packages.main.greet('Ada', 'formal') AS greeting"
+      ],
+      "CONSISTENT",
+      []
+    ]
+  ]
+}

@@ -1,0 +1,399 @@
+{
+  "schema_version": 1,
+  "catalogs": {
+    "released": {
+      "path": "coverage/containers/catalog-released.json",
+      "sha256": "68be3336da6939c291357a2ba33c159167dc2784b16e9879efce3ea52a1c1615",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "catalog_sha256": "68be3336da6939c291357a2ba33c159167dc2784b16e9879efce3ea52a1c1615",
+        "notes": "Full independent containers catalog: 10 logical names, same-named table aliases and overloads retained. Each separate entrypoint has matching released/current native names and input signatures. The complete release-to-current source/dependency diff adds documentation, agent tasks and composed SQL examples; it does not change function behavior or dependency pins. Analytical execution uses v0.2.0, not current source. Authentication-capable names and undemonstrated starter surfaces remain in the denominator."
+      }
+    },
+    "current": {
+      "path": "coverage/containers/catalog-current.json",
+      "sha256": "f0c3aa41323d73bc314a99c991c18dfcd97735aabad869300607f3b5a0406d16",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "catalog_sha256": "f0c3aa41323d73bc314a99c991c18dfcd97735aabad869300607f3b5a0406d16",
+        "notes": "Full independent containers catalog: 10 logical names, same-named table aliases and overloads retained. Each separate entrypoint has matching released/current native names and input signatures. The complete release-to-current source/dependency diff adds documentation, agent tasks and composed SQL examples; it does not change function behavior or dependency pins. Analytical execution uses v0.2.0, not current source. Authentication-capable names and undemonstrated starter surfaces remain in the denominator."
+      }
+    }
+  },
+  "notebooks": [
+    {
+      "path": "02_container_platform_and_layers.ipynb",
+      "sha256": "c388adab363a9f5e18821d4dbaf80054b9e20344bce021da0cc5cfb3693ecc9c",
+      "execution": {
+        "path": "coverage/containers/run-02.json",
+        "sha256": "b1e6bf6830a3bb0a0bfaabb921cc094b29a3b7683b62305bccc96ccd38c2e78f"
+      }
+    },
+    {
+      "path": "04_a_tag_page_is_not_an_image_identity.ipynb",
+      "sha256": "b038125cca5fa0a145dd1908e2d13bb55c18c4fa799bba500f280d96c80a6f67",
+      "execution": {
+        "path": "coverage/containers/run-04.json",
+        "sha256": "7bfb84100a4426f3dfa2df768e1e2f4e7af9925ed819d9c69fd3de50b7148acd"
+      }
+    }
+  ],
+  "examples": [
+    {
+      "object": {
+        "schema": "main",
+        "name": "platforms"
+      },
+      "notebook": "02_container_platform_and_layers.ipynb",
+      "sql": [
+        {
+          "cell": "36f2bb5e",
+          "reference": "containers.main.platforms"
+        }
+      ],
+      "narrative_cells": [
+        "d9cc28a5"
+      ],
+      "result_cells": [
+        "a55fe6f3"
+      ],
+      "interpretation_cells": [
+        "fac8ec50"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "c388adab363a9f5e18821d4dbaf80054b9e20344bce021da0cc5cfb3693ecc9c",
+        "catalog_sha256": [
+          "68be3336da6939c291357a2ba33c159167dc2784b16e9879efce3ea52a1c1615",
+          "f0c3aa41323d73bc314a99c991c18dfcd97735aabad869300607f3b5a0406d16"
+        ],
+        "purpose": "Select a Linux architecture from an immutable index before reading platform-specific bytes.",
+        "finding": "The anchored index contains five platform descriptors. amd64 and arm64 select different child digests from the same index; manifest JSON size is not image-layer size."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "layers"
+      },
+      "notebook": "02_container_platform_and_layers.ipynb",
+      "sql": [
+        {
+          "cell": "4e373caa",
+          "reference": "containers.main.layers"
+        }
+      ],
+      "narrative_cells": [
+        "333483f1"
+      ],
+      "result_cells": [
+        "e938353b",
+        "84354bd0",
+        "0734ef6b"
+      ],
+      "interpretation_cells": [
+        "fac8ec50"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "c388adab363a9f5e18821d4dbaf80054b9e20344bce021da0cc5cfb3693ecc9c",
+        "catalog_sha256": [
+          "68be3336da6939c291357a2ba33c159167dc2784b16e9879efce3ea52a1c1615",
+          "f0c3aa41323d73bc314a99c991c18dfcd97735aabad869300607f3b5a0406d16"
+        ],
+        "purpose": "Reconcile ordered layer descriptors with verified configuration and compare byte concentration.",
+        "finding": "Each selected platform declares ten contiguous layers; configuration OS/architecture/rootfs count agree. Compressed totals and largest-first/manifest-order curves reconcile. Worker verifies manifest/configuration SHA256, not layer payloads; curves make no timing claim."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "configuration"
+      },
+      "notebook": "02_container_platform_and_layers.ipynb",
+      "sql": [
+        {
+          "cell": "4e373caa",
+          "reference": "containers.main.configuration"
+        }
+      ],
+      "narrative_cells": [
+        "333483f1"
+      ],
+      "result_cells": [
+        "e938353b",
+        "84354bd0",
+        "0734ef6b"
+      ],
+      "interpretation_cells": [
+        "fac8ec50"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "c388adab363a9f5e18821d4dbaf80054b9e20344bce021da0cc5cfb3693ecc9c",
+        "catalog_sha256": [
+          "68be3336da6939c291357a2ba33c159167dc2784b16e9879efce3ea52a1c1615",
+          "f0c3aa41323d73bc314a99c991c18dfcd97735aabad869300607f3b5a0406d16"
+        ],
+        "purpose": "Reconcile ordered layer descriptors with verified configuration and compare byte concentration.",
+        "finding": "Each selected platform declares ten contiguous layers; configuration OS/architecture/rootfs count agree. Compressed totals and largest-first/manifest-order curves reconcile. Worker verifies manifest/configuration SHA256, not layer payloads; curves make no timing claim."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "sources"
+      },
+      "notebook": "04_a_tag_page_is_not_an_image_identity.ipynb",
+      "sql": [
+        {
+          "cell": "discovery-sql",
+          "reference": "containers.main.sources"
+        }
+      ],
+      "narrative_cells": [
+        "contract-story"
+      ],
+      "result_cells": [
+        "discovery-sql"
+      ],
+      "interpretation_cells": [
+        "contract-story"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "b038125cca5fa0a145dd1908e2d13bb55c18c4fa799bba500f280d96c80a6f67",
+        "catalog_sha256": [
+          "68be3336da6939c291357a2ba33c159167dc2784b16e9879efce3ea52a1c1615",
+          "f0c3aa41323d73bc314a99c991c18dfcd97735aabad869300607f3b5a0406d16"
+        ],
+        "purpose": "Establish the anonymous Quay source and its seven adapter operations before bounded registry queries.",
+        "finding": "Exactly one container source is configured and reports native readiness and seven supported operations. Readiness means adapter availability, not a remote probe; incomplete/unknown completeness is retained."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "capabilities"
+      },
+      "notebook": "04_a_tag_page_is_not_an_image_identity.ipynb",
+      "sql": [
+        {
+          "cell": "discovery-sql",
+          "reference": "containers.main.capabilities"
+        }
+      ],
+      "narrative_cells": [
+        "contract-story"
+      ],
+      "result_cells": [
+        "discovery-sql"
+      ],
+      "interpretation_cells": [
+        "contract-story"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "b038125cca5fa0a145dd1908e2d13bb55c18c4fa799bba500f280d96c80a6f67",
+        "catalog_sha256": [
+          "68be3336da6939c291357a2ba33c159167dc2784b16e9879efce3ea52a1c1615",
+          "f0c3aa41323d73bc314a99c991c18dfcd97735aabad869300607f3b5a0406d16"
+        ],
+        "purpose": "Establish the anonymous Quay source and its seven adapter operations before bounded registry queries.",
+        "finding": "Exactly one container source is configured and reports native readiness and seven supported operations. Readiness means adapter availability, not a remote probe; incomplete/unknown completeness is retained."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "source_status"
+      },
+      "notebook": "04_a_tag_page_is_not_an_image_identity.ipynb",
+      "sql": [
+        {
+          "cell": "discovery-sql",
+          "reference": "containers.main.source_status"
+        }
+      ],
+      "narrative_cells": [
+        "contract-story"
+      ],
+      "result_cells": [
+        "discovery-sql"
+      ],
+      "interpretation_cells": [
+        "contract-story"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "b038125cca5fa0a145dd1908e2d13bb55c18c4fa799bba500f280d96c80a6f67",
+        "catalog_sha256": [
+          "68be3336da6939c291357a2ba33c159167dc2784b16e9879efce3ea52a1c1615",
+          "f0c3aa41323d73bc314a99c991c18dfcd97735aabad869300607f3b5a0406d16"
+        ],
+        "purpose": "Establish the anonymous Quay source and its seven adapter operations before bounded registry queries.",
+        "finding": "Exactly one container source is configured and reports native readiness and seven supported operations. Readiness means adapter availability, not a remote probe; incomplete/unknown completeness is retained."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "search"
+      },
+      "notebook": "04_a_tag_page_is_not_an_image_identity.ipynb",
+      "sql": [
+        {
+          "cell": "discovery-sql",
+          "reference": "containers.main.search"
+        }
+      ],
+      "narrative_cells": [
+        "contract-story"
+      ],
+      "result_cells": [
+        "discovery-sql",
+        "inventory-result",
+        "inventory-chart"
+      ],
+      "interpretation_cells": [
+        "inventory-result"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "b038125cca5fa0a145dd1908e2d13bb55c18c4fa799bba500f280d96c80a6f67",
+        "catalog_sha256": [
+          "68be3336da6939c291357a2ba33c159167dc2784b16e9879efce3ea52a1c1615",
+          "f0c3aa41323d73bc314a99c991c18dfcd97735aabad869300607f3b5a0406d16"
+        ],
+        "purpose": "Keep search candidates, chosen repository metadata and tag-page populations distinct.",
+        "finding": "Search returns eight names including the selected repository; its description is measured as characters rather than rendered HTML. Tag budget 8→16 returns 8→16 labels; search stays eight. v3.2.1 is absent from both bounded pages yet resolves directly, demonstrating the limited meaning of absence."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "repository"
+      },
+      "notebook": "04_a_tag_page_is_not_an_image_identity.ipynb",
+      "sql": [
+        {
+          "cell": "discovery-sql",
+          "reference": "containers.main.repository"
+        }
+      ],
+      "narrative_cells": [
+        "contract-story"
+      ],
+      "result_cells": [
+        "discovery-sql",
+        "inventory-result",
+        "inventory-chart"
+      ],
+      "interpretation_cells": [
+        "inventory-result"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "b038125cca5fa0a145dd1908e2d13bb55c18c4fa799bba500f280d96c80a6f67",
+        "catalog_sha256": [
+          "68be3336da6939c291357a2ba33c159167dc2784b16e9879efce3ea52a1c1615",
+          "f0c3aa41323d73bc314a99c991c18dfcd97735aabad869300607f3b5a0406d16"
+        ],
+        "purpose": "Keep search candidates, chosen repository metadata and tag-page populations distinct.",
+        "finding": "Search returns eight names including the selected repository; its description is measured as characters rather than rendered HTML. Tag budget 8→16 returns 8→16 labels; search stays eight. v3.2.1 is absent from both bounded pages yet resolves directly, demonstrating the limited meaning of absence."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "tags"
+      },
+      "notebook": "04_a_tag_page_is_not_an_image_identity.ipynb",
+      "sql": [
+        {
+          "cell": "discovery-sql",
+          "reference": "containers.main.tags"
+        }
+      ],
+      "narrative_cells": [
+        "contract-story"
+      ],
+      "result_cells": [
+        "discovery-sql",
+        "inventory-result",
+        "inventory-chart"
+      ],
+      "interpretation_cells": [
+        "inventory-result"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "b038125cca5fa0a145dd1908e2d13bb55c18c4fa799bba500f280d96c80a6f67",
+        "catalog_sha256": [
+          "68be3336da6939c291357a2ba33c159167dc2784b16e9879efce3ea52a1c1615",
+          "f0c3aa41323d73bc314a99c991c18dfcd97735aabad869300607f3b5a0406d16"
+        ],
+        "purpose": "Keep search candidates, chosen repository metadata and tag-page populations distinct.",
+        "finding": "Search returns eight names including the selected repository; its description is measured as characters rather than rendered HTML. Tag budget 8→16 returns 8→16 labels; search stays eight. v3.2.1 is absent from both bounded pages yet resolves directly, demonstrating the limited meaning of absence."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "manifest"
+      },
+      "notebook": "04_a_tag_page_is_not_an_image_identity.ipynb",
+      "sql": [
+        {
+          "cell": "reference-sql",
+          "reference": "containers.main.manifest"
+        }
+      ],
+      "narrative_cells": [
+        "reference-story"
+      ],
+      "result_cells": [
+        "reference-result",
+        "reference-chart",
+        "checks-result"
+      ],
+      "interpretation_cells": [
+        "reference-result"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "b038125cca5fa0a145dd1908e2d13bb55c18c4fa799bba500f280d96c80a6f67",
+        "catalog_sha256": [
+          "68be3336da6939c291357a2ba33c159167dc2784b16e9879efce3ea52a1c1615",
+          "f0c3aa41323d73bc314a99c991c18dfcd97735aabad869300607f3b5a0406d16"
+        ],
+        "purpose": "Resolve a mutable tag independently of an immutable anchor and compare verified identities.",
+        "finding": "At both runs v3.2.1 resolves to the recorded sha256:6927e091… index with five platform descriptors. Equality is reported, not imposed as an invariant; the pinned digest must match its requested identity. No image execution or layer payload reads occur."
+      }
+    }
+  ]
+}

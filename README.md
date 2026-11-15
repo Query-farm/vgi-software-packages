@@ -201,4 +201,4 @@ Report reproducible worker defects through the repository issue tracker. Include
 
 ## Executed notebooks
 
-[Package and container metadata notebooks](notebooks/README.md) compare Python wheel inventories and resolve image platforms into ordered layer sizes using public registry metadata.
+[Four executed package and container metadata notebooks](notebooks/README.md) compare wheel inventories, dependency declarations, platform layers and tag-to-digest identity using anonymous public registry reads.

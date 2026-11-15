@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "repository": "Query-farm/vgi-software-packages",
+  "revision": "v0.2.0",
+  "captured_at": "2026-11-15T00:39:56.079627+00:00",
+  "default_schema": "main",
+  "scope": "all_public_functions_and_tables",
+  "complete": true,
+  "evidence": [
+    {
+      "path": "coverage/provenance.json",
+      "sha256": "764574daf3e941a5eec4db5c3bee25a184f67a3d2e87b1b271789e00076dd090",
+      "description": "Actual release/current collection and anonymous live acquisition boundary."
+    },
+    {
+      "path": "coverage/source-comparison.json",
+      "sha256": "dd228cb5da187e50f34a173bed44d09f3808a6acc62436e5d00764259ff812b6",
+      "description": "Full source/dependency comparison; public names and behavior retained."
+    },
+    {
+      "path": "coverage/packages/released-functions.json",
+      "sha256": "005492df0e95828b708849cb86d691730d80b97b1793f8c2269b511afded267d",
+      "description": "Complete native duckdb_functions() export filtered by this entrypoint; no objects omitted."
+    },
+    {
+      "path": "coverage/packages/released-tables.json",
+      "sha256": "7ddf3b11cba5a596d5b04f842c57bd3e5195c26c47f1338cba475aad6b3c9f6a",
+      "description": "Complete native duckdb_tables() export filtered by this entrypoint; no objects omitted."
+    },
+    {
+      "path": "coverage/packages/released-views.json",
+      "sha256": "a76be26518f67ef4635fd4c0f603e4feca61f49a05f4a2162d74ff60b33eb3ed",
+      "description": "Complete native duckdb_views() export filtered by this entrypoint; no objects omitted."
+    },
+    {
+      "path": "coverage/packages/released-databases.json",
+      "sha256": "722133c5fc6a3ba465aa73769cd5586a9f1f18a3611fb0de1b24850fbb0a5087",
+      "description": "Actual catalog title/subtitle and metadata."
+    }
+  ],
+  "objects": [
+    {
+      "schema": "main",
+      "name": "artifacts",
+      "kind": "function",
+      "signatures": [
+        "artifacts(VARCHAR, VARCHAR, VARCHAR, BIGINT) -> TABLE"
+      ],
+      "authentication": "optional",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "capabilities",
+      "kind": "function",
+      "signatures": [
+        "capabilities() -> TABLE"
+      ],
+      "authentication": "optional",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "capabilities",
+      "kind": "table",
+      "signatures": [
+        "TABLES"
+      ],
+      "authentication": "optional",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "dependencies",
+      "kind": "function",
+      "signatures": [
+        "dependencies(VARCHAR, VARCHAR, VARCHAR, BIGINT) -> TABLE"
+      ],
+      "authentication": "optional",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "fetch_items",
+      "kind": "function",
+      "signatures": [
+        "fetch_items(VARCHAR, BIGINT) -> TABLE"
+      ],
+      "authentication": "optional",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "greet",
+      "kind": "function",
+      "signatures": [
+        "greet(VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "greet",
+      "kind": "function",
+      "signatures": [
+        "greet(VARCHAR, VARCHAR) -> VARCHAR"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "package",
+      "kind": "function",
+      "signatures": [
+        "package(VARCHAR, VARCHAR, BIGINT) -> TABLE"
+      ],
+      "authentication": "optional",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "search",
+      "kind": "function",
+      "signatures": [
+        "search(VARCHAR, VARCHAR, BIGINT) -> TABLE"
+      ],
+      "authentication": "optional",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "sequence_table",
+      "kind": "function",
+      "signatures": [
+        "sequence_table(BIGINT, BIGINT) -> TABLE"
+      ],
+      "authentication": "none",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "source_status",
+      "kind": "function",
+      "signatures": [
+        "source_status() -> TABLE"
+      ],
+      "authentication": "optional",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "source_status",
+      "kind": "table",
+      "signatures": [
+        "TABLES"
+      ],
+      "authentication": "optional",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "sources",
+      "kind": "function",
+      "signatures": [
+        "sources() -> TABLE"
+      ],
+      "authentication": "optional",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "sources",
+      "kind": "table",
+      "signatures": [
+        "TABLES"
+      ],
+      "authentication": "optional",
+      "access": "read"
+    },
+    {
+      "schema": "main",
+      "name": "versions",
+      "kind": "function",
+      "signatures": [
+        "versions(VARCHAR, VARCHAR, BIGINT) -> TABLE"
+      ],
+      "authentication": "optional",
+      "access": "read"
+    }
+  ]
+}

@@ -1,0 +1,326 @@
+{
+  "schema_version": 1,
+  "catalogs": {
+    "released": {
+      "path": "coverage/packages/catalog-released.json",
+      "sha256": "04bb6df22e9123a3da6887da1d29e77c5347d191af3d506a92bb3c1b7eee9a7f",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "catalog_sha256": "04bb6df22e9123a3da6887da1d29e77c5347d191af3d506a92bb3c1b7eee9a7f",
+        "notes": "Full independent packages catalog: 11 logical names, same-named table aliases and overloads retained. Each separate entrypoint has matching released/current native names and input signatures. The complete release-to-current source/dependency diff adds documentation, agent tasks and composed SQL examples; it does not change function behavior or dependency pins. Analytical execution uses v0.2.0, not current source. Authentication-capable names and undemonstrated starter surfaces remain in the denominator."
+      }
+    },
+    "current": {
+      "path": "coverage/packages/catalog-current.json",
+      "sha256": "5a8438fd346a6d74d3f4e003b7914e94f200a447726c59159818fae9fe24de29",
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "catalog_sha256": "5a8438fd346a6d74d3f4e003b7914e94f200a447726c59159818fae9fe24de29",
+        "notes": "Full independent packages catalog: 11 logical names, same-named table aliases and overloads retained. Each separate entrypoint has matching released/current native names and input signatures. The complete release-to-current source/dependency diff adds documentation, agent tasks and composed SQL examples; it does not change function behavior or dependency pins. Analytical execution uses v0.2.0, not current source. Authentication-capable names and undemonstrated starter surfaces remain in the denominator."
+      }
+    }
+  },
+  "notebooks": [
+    {
+      "path": "01_python_wheel_inventory.ipynb",
+      "sha256": "e8dcb0f1fb9e92f491caeb0ab2d943c037351ad62872dc8652b8eae715ec4f91",
+      "execution": {
+        "path": "coverage/packages/run-01.json",
+        "sha256": "ae734720725d99085eb41a87fb9f6c1e1d172a1b2ec6d0f22f7829148905803e"
+      }
+    },
+    {
+      "path": "03_discovery_is_not_a_dependency_plan.ipynb",
+      "sha256": "0eae9505f093049a50e7ae479f34bd116c4b458b4489a720f520bdf88fa7a7a7",
+      "execution": {
+        "path": "coverage/packages/run-03.json",
+        "sha256": "1b90474045cc61be005a54709685fdf2a7320d5f3bbe4b95270dd8575c6ecb07"
+      }
+    }
+  ],
+  "examples": [
+    {
+      "object": {
+        "schema": "main",
+        "name": "artifacts"
+      },
+      "notebook": "01_python_wheel_inventory.ipynb",
+      "sql": [
+        {
+          "cell": "a4bbbe58",
+          "reference": "packages.main.artifacts"
+        }
+      ],
+      "narrative_cells": [
+        "6faa51f7"
+      ],
+      "result_cells": [
+        "a7ea1ea3",
+        "319a5704",
+        "14a8e0d0"
+      ],
+      "interpretation_cells": [
+        "d1a20548"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "e8dcb0f1fb9e92f491caeb0ab2d943c037351ad62872dc8652b8eae715ec4f91",
+        "catalog_sha256": [
+          "04bb6df22e9123a3da6887da1d29e77c5347d191af3d506a92bb3c1b7eee9a7f",
+          "5a8438fd346a6d74d3f4e003b7914e94f200a447726c59159818fae9fe24de29"
+        ],
+        "purpose": "Count files by exact Python/ABI pair and compare declared size without an installation claim.",
+        "finding": "PyPI pandas 2.2.3 exposes 42 artifacts: 41 wheels and one source archive. cp313/cp313 and cp312/cp312 each select seven unyanked files; cp313t remains separate. Selected file sizes and hashes are metadata, not verified payloads or installed footprint."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "sources"
+      },
+      "notebook": "03_discovery_is_not_a_dependency_plan.ipynb",
+      "sql": [
+        {
+          "cell": "discovery-sql",
+          "reference": "packages.main.sources"
+        }
+      ],
+      "narrative_cells": [
+        "contract-story"
+      ],
+      "result_cells": [
+        "discovery-sql",
+        "contract-chart"
+      ],
+      "interpretation_cells": [
+        "contract-story"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "0eae9505f093049a50e7ae479f34bd116c4b458b4489a720f520bdf88fa7a7a7",
+        "catalog_sha256": [
+          "04bb6df22e9123a3da6887da1d29e77c5347d191af3d506a92bb3c1b7eee9a7f",
+          "5a8438fd346a6d74d3f4e003b7914e94f200a447726c59159818fae9fe24de29"
+        ],
+        "purpose": "Join configured source identity, supported operations and search readiness before choosing a provider.",
+        "finding": "Two anonymous package sources expose all five adapter operations. Native npm is ready; indexed PyPI is unprepared in the empty cache despite supported search. Readiness is not a remote health probe or ecosystem completeness claim."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "capabilities"
+      },
+      "notebook": "03_discovery_is_not_a_dependency_plan.ipynb",
+      "sql": [
+        {
+          "cell": "discovery-sql",
+          "reference": "packages.main.capabilities"
+        }
+      ],
+      "narrative_cells": [
+        "contract-story"
+      ],
+      "result_cells": [
+        "discovery-sql",
+        "contract-chart"
+      ],
+      "interpretation_cells": [
+        "contract-story"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "0eae9505f093049a50e7ae479f34bd116c4b458b4489a720f520bdf88fa7a7a7",
+        "catalog_sha256": [
+          "04bb6df22e9123a3da6887da1d29e77c5347d191af3d506a92bb3c1b7eee9a7f",
+          "5a8438fd346a6d74d3f4e003b7914e94f200a447726c59159818fae9fe24de29"
+        ],
+        "purpose": "Join configured source identity, supported operations and search readiness before choosing a provider.",
+        "finding": "Two anonymous package sources expose all five adapter operations. Native npm is ready; indexed PyPI is unprepared in the empty cache despite supported search. Readiness is not a remote health probe or ecosystem completeness claim."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "source_status"
+      },
+      "notebook": "03_discovery_is_not_a_dependency_plan.ipynb",
+      "sql": [
+        {
+          "cell": "discovery-sql",
+          "reference": "packages.main.source_status"
+        }
+      ],
+      "narrative_cells": [
+        "contract-story"
+      ],
+      "result_cells": [
+        "discovery-sql",
+        "contract-chart"
+      ],
+      "interpretation_cells": [
+        "contract-story"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "0eae9505f093049a50e7ae479f34bd116c4b458b4489a720f520bdf88fa7a7a7",
+        "catalog_sha256": [
+          "04bb6df22e9123a3da6887da1d29e77c5347d191af3d506a92bb3c1b7eee9a7f",
+          "5a8438fd346a6d74d3f4e003b7914e94f200a447726c59159818fae9fe24de29"
+        ],
+        "purpose": "Join configured source identity, supported operations and search readiness before choosing a provider.",
+        "finding": "Two anonymous package sources expose all five adapter operations. Native npm is ready; indexed PyPI is unprepared in the empty cache despite supported search. Readiness is not a remote health probe or ecosystem completeness claim."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "search"
+      },
+      "notebook": "03_discovery_is_not_a_dependency_plan.ipynb",
+      "sql": [
+        {
+          "cell": "discovery-sql",
+          "reference": "packages.main.search"
+        }
+      ],
+      "narrative_cells": [
+        "contract-story"
+      ],
+      "result_cells": [
+        "discovery-sql"
+      ],
+      "interpretation_cells": [
+        "contract-story"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "0eae9505f093049a50e7ae479f34bd116c4b458b4489a720f520bdf88fa7a7a7",
+        "catalog_sha256": [
+          "04bb6df22e9123a3da6887da1d29e77c5347d191af3d506a92bb3c1b7eee9a7f",
+          "5a8438fd346a6d74d3f4e003b7914e94f200a447726c59159818fae9fe24de29"
+        ],
+        "purpose": "Use the ready npm source for bounded discovery while preserving native identities and ranking context.",
+        "finding": "Eight apache-arrow search results are a bounded provider selection. Scores are provider-specific; discovery neither establishes a complete ecosystem nor chooses an installation plan."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "package"
+      },
+      "notebook": "03_discovery_is_not_a_dependency_plan.ipynb",
+      "sql": [
+        {
+          "cell": "release-sql",
+          "reference": "packages.main.package"
+        }
+      ],
+      "narrative_cells": [
+        "release-story"
+      ],
+      "result_cells": [
+        "release-sql"
+      ],
+      "interpretation_cells": [
+        "release-story"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "0eae9505f093049a50e7ae479f34bd116c4b458b4489a720f520bdf88fa7a7a7",
+        "catalog_sha256": [
+          "04bb6df22e9123a3da6887da1d29e77c5347d191af3d506a92bb3c1b7eee9a7f",
+          "5a8438fd346a6d74d3f4e003b7914e94f200a447726c59159818fae9fe24de29"
+        ],
+        "purpose": "Distinguish provider-selected current project metadata from a native version inventory and an exact historical release.",
+        "finding": "Current project record reports pandas 3.1.1 and Python >=3.11; 121 native version strings include 2.2.3. Missing version publication/yanking fields remain NULL. Current Python requirement is not assigned to the old release, and row order is not a version ordering."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "versions"
+      },
+      "notebook": "03_discovery_is_not_a_dependency_plan.ipynb",
+      "sql": [
+        {
+          "cell": "release-sql",
+          "reference": "packages.main.versions"
+        }
+      ],
+      "narrative_cells": [
+        "release-story"
+      ],
+      "result_cells": [
+        "release-sql"
+      ],
+      "interpretation_cells": [
+        "release-story"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "0eae9505f093049a50e7ae479f34bd116c4b458b4489a720f520bdf88fa7a7a7",
+        "catalog_sha256": [
+          "04bb6df22e9123a3da6887da1d29e77c5347d191af3d506a92bb3c1b7eee9a7f",
+          "5a8438fd346a6d74d3f4e003b7914e94f200a447726c59159818fae9fe24de29"
+        ],
+        "purpose": "Distinguish provider-selected current project metadata from a native version inventory and an exact historical release.",
+        "finding": "Current project record reports pandas 3.1.1 and Python >=3.11; 121 native version strings include 2.2.3. Missing version publication/yanking fields remain NULL. Current Python requirement is not assigned to the old release, and row order is not a version ordering."
+      }
+    },
+    {
+      "object": {
+        "schema": "main",
+        "name": "dependencies"
+      },
+      "notebook": "03_discovery_is_not_a_dependency_plan.ipynb",
+      "sql": [
+        {
+          "cell": "release-sql",
+          "reference": "packages.main.dependencies"
+        }
+      ],
+      "narrative_cells": [
+        "release-story"
+      ],
+      "result_cells": [
+        "dependency-result",
+        "dependency-chart",
+        "checks-result"
+      ],
+      "interpretation_cells": [
+        "dependency-result"
+      ],
+      "review": {
+        "status": "approved",
+        "reviewer": "Codex /root/notebooks_ortools",
+        "reviewed_at": "2026-11-15T00:39:56.079627+00:00",
+        "notebook_sha256": "0eae9505f093049a50e7ae479f34bd116c4b458b4489a720f520bdf88fa7a7a7",
+        "catalog_sha256": [
+          "04bb6df22e9123a3da6887da1d29e77c5347d191af3d506a92bb3c1b7eee9a7f",
+          "5a8438fd346a6d74d3f4e003b7914e94f200a447726c59159818fae9fe24de29"
+        ],
+        "purpose": "Classify marker text and compare declaration counts with distinct dependency names.",
+        "finding": "The exact 2.2.3 release returns 85 declarations, 79 mentioning extra. Default selects six declarations but four names, including three conditional numpy declarations. Including extras selects all 85; no PEP 508 evaluation or dependency solving occurs."
+      }
+    }
+  ]
+}

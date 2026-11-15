@@ -1,0 +1,16 @@
+{
+  "repository": "Query-farm/vgi-software-packages",
+  "release_tag": "v0.2.0",
+  "release_revision": "6028c73328b5099398fa206d0c12a67a547e81fb",
+  "current_public_revision": "0f7f1686bcd25b4b0cc1496b138ae79d54bae98c",
+  "engine": "Haybarn 2.0.0rc11 / VGI e75482339d",
+  "captured_at": "2026-11-15T00:39:56.079627+00:00",
+  "released_launches": [
+    "github-auto://Query-farm/vgi-software-packages@v0.2.0/vgi-packages-worker",
+    "github-auto://Query-farm/vgi-software-packages@v0.2.0/vgi-containers-worker"
+  ],
+  "current_catalog_probe": "Read-only original checkout src/worker.ts and src/container_worker.ts with already installed Bun dependencies; no build/install/source edits. Catalog evidence only, not reader startup.",
+  "data_boundary": "All notebooks use live anonymous public PyPI/npm/Quay metadata; no synthetic data, recording or fallback. Historical index digest is a provenance anchor, not replay. No packages or images run, no artifacts/layer payloads fetched. Fresh empty temporary SQL-secret storage, persistence disabled, no SQL credentials created.",
+  "counting": "Two independent catalogs. Deduplicate (schema,name) within each, never across entrypoints. Every public function/table/view included.",
+  "comparison": "Each separate entrypoint has matching released/current native names and input signatures. The complete release-to-current source/dependency diff adds documentation, agent tasks and composed SQL examples; it does not change function behavior or dependency pins. Analytical execution uses v0.2.0, not current source. Authentication-capable names and undemonstrated starter surfaces remain in the denominator."
+}

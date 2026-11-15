@@ -1,59 +1,127 @@
-# Package registry and container metadata notebooks
+# Package discovery and container identity
 
-1. [Python wheel inventory](01_python_wheel_inventory.ipynb) reads live pandas 2.2.3 artifact metadata from PyPI, separates filename tags in SQL and compares file counts and declared sizes for a selected CPython Python/ABI pair.
-2. [Container platform and layers](02_container_platform_and_layers.ipynb) resolves an immutable Prometheus image index from Quay, selects a platform and examines ordered layer sizes and byte concentration. This uses the separate container worker shipped by the same repository.
+Read the saved notebooks on GitHub, or follow their **Open in Colab** links and Run All.
+Each is independent and begins with its actual attached catalog's title and subtitle.
 
-## Run from this directory
+| Notebook | Question | Experiment |
+|---|---|---|
+| [01 · Python wheel inventory](01_python_wheel_inventory.ipynb) | What do exact Python/ABI filename tags and declared artifact sizes establish? | `CPYTHON_TAG="cp313"` → `"cp312"` |
+| [02 · Container platform and layers](02_container_platform_and_layers.ipynb) | Which platform's ordered descriptors account for the image's compressed bytes? | `ARCHITECTURE="amd64"` → `"arm64"` |
+| [03 · Discovery is not a dependency plan](03_discovery_is_not_a_dependency_plan.ipynb) | Does adapter support imply search readiness, and do release declarations identify installed dependencies? | `INCLUDE_EXTRAS=False` → `True` |
+| [04 · A tag page is not an image identity](04_a_tag_page_is_not_an_image_identity.ipynb) | What can a bounded registry page tell us before resolving a mutable tag to a digest? | `TAG_LIMIT=8` → `16` |
 
-Install [uv](https://docs.astral.sh/uv/). The notebook environment supports Python 3.13 or 3.14. Network access is required for dependencies, the published Haybarn/VGI extension, pinned native worker releases and public registry metadata. No local Bun/Node build, worker checkout, package install or container runtime is needed. A copy of this directory runs independently.
+The first two retain the original wheel and OCI byte-accounting analyses. The additional
+stories separate discovery, native version/condition text and immutable identity.
+All calls are anonymous **live public metadata reads**, with no recording or fallback.
+An upstream failure fails the run and leaves the previous saved notebook intact.
+No package artifact or layer payload is downloaded, installed or run.
 
-```bash
-uv sync --frozen
-uv run --frozen python execute.py
+## Shared setup and two entrypoints
+
+The visible install cell pins [shared notebook tools v0.3.44](https://github.com/Query-farm/vgi-example-notebooks/tree/v0.3.44).
+It installs only the base package in Colab and downloads the hash-verified
+[public source helper](public_sources.py) and [provenance](fixtures/provenance.json).
+Compatible preloaded libraries and kernel packages are preserved. Hosted Colab itself
+has not been exercised; fresh preloaded Python 3.12 notebook-only runs check each native
+launcher and the companion-download path. No Git checkout or Bun/Node build is needed.
+
+The same repository ships two independent catalogs. SQL makes their choice explicit:
+
+```sql
+ATTACH 'packages' (TYPE vgi,
+    LOCATION 'github-auto://Query-farm/vgi-software-packages@v0.2.0/vgi-packages-worker');
+ATTACH 'containers' (TYPE vgi,
+    LOCATION 'github-auto://Query-farm/vgi-software-packages@v0.2.0/vgi-containers-worker');
 ```
 
-The literal SQL locations select the `vgi-packages-worker` and `vgi-containers-worker` prefixes of native release **v0.2.0** via `github-auto`. VGI chooses the host platform archive and verifies its published SHA256 sidecar. Both native launches were executed through published Haybarn **2.0.0rc11** on macOS arm64. The release also supplies Linux amd64/arm64 and Windows amd64 assets; those platforms were not executed here. Rerun both defaults and experiments after changing worker or engine pins.
+Books 01/03 attach only packages; 02/04 attach only containers. Native release **v0.2.0**
+is selected by asset prefix, host platform and published SHA256 sidecar. Both paths run
+through Haybarn **2.0.0rc11** / VGI **e75482339d** on macOS arm64. Other release platforms
+were not executed here. Internet access is required for dependencies, extension, native
+worker and public metadata. Revalidate after changing any release pin.
 
-For interactive use, register this environment and select it in Jupyter:
+For local publication, install [uv](https://docs.astral.sh/uv/) and run from this directory:
 
 ```bash
-uv run --frozen python -m ipykernel install --user --name vgi-software-notebooks --display-name 'Python (software registry notebooks)'
+uv sync --locked --extra runner
+uv run --locked --extra runner vgi-notebooks
 ```
 
-Restart and run all after editing a parameter. Parameters, ATTACH and analytical SQL remain visible; Python configuration, plots, interpretation source and cleanup are folded. `execute.py` creates a temporary kernel with this directory as cwd, saves only after success and rejects overrides without a separate output directory, unknown parameter names and source-directory output destinations.
+The locked environment supports Python 3.11–3.14. The optional `[runner]` dependency is
+for local publication, not an in-notebook replacement of Colab's kernel. The shared runner
+validates presentation and saves atomically after success. Parameters and analytical SQL
+remain visible; plotting and interpretation source carry editor folding metadata.
+SVG output stays native in Colab/Jupyter; default publication also links committed
+content-addressed SVG assets for GitHub. Optional PNG review exports are ignored.
 
 ## Focused experiments
 
-Run each notebook separately when supplying its own parameter:
-
 ```bash
-uv run --frozen python execute.py 01_python_wheel_inventory.ipynb --parameters '{"CPYTHON_TAG":"cp312"}' --output-dir validation/cp312
-uv run --frozen python execute.py 02_container_platform_and_layers.ipynb --parameters '{"ARCHITECTURE":"arm64"}' --output-dir validation/arm64
+uv run --locked --extra runner vgi-notebooks 01_python_wheel_inventory.ipynb --parameters '{"CPYTHON_TAG":"cp312"}' --output-dir validation/cp312
+uv run --locked --extra runner vgi-notebooks 02_container_platform_and_layers.ipynb --parameters '{"ARCHITECTURE":"arm64"}' --output-dir validation/arm64
+uv run --locked --extra runner vgi-notebooks 03_discovery_is_not_a_dependency_plan.ipynb --parameters '{"INCLUDE_EXTRAS":true}' --output-dir validation/extras
+uv run --locked --extra runner vgi-notebooks 04_a_tag_page_is_not_an_image_identity.ipynb --parameters '{"TAG_LIMIT":16}' --output-dir validation/tags16
 ```
 
-The package default is cp313. Selection requires an exact match in both Python and ABI filename fields and explicitly unyanked files. The chart counts each wheel file once even if its platform field contains several dotted aliases. The second chart displays the first alias; full filenames/tags and declared SHA256 metadata remain in the table. This is an artifact inventory, not an installer or dependency/compatibility solver. File sizes do not establish installed footprint, memory requirements or performance. Files and their hashes are not downloaded or verified.
+Overrides require a separate destination. Unknown parameters, source-directory destinations
+and invalid values fail without replacing previous successful outputs. Each experiment
+keeps the acquisition and question explicit; live search/metadata may also change upstream.
 
-The image default is linux/amd64; the experiment selects linux/arm64 from the same pinned index. The index digest was obtained from `prometheus/prometheus:v3.2.1` on 2026-11-14 and is recorded in [provenance.json](fixtures/provenance.json). SQL uses the immutable index digest, so subsequent movement of the tag does not redirect it. It displays the selected child digest before fetching its layer descriptors and verified configuration. The worker requires literal arguments; a small Python bridge copies the SQL-selected digest to the visible next query. No hidden Python retrieval or image inspection is performed.
+## Provenance and limits
 
-The index descriptor size describes manifest JSON, not image payloads. Layer `size` is the declared compressed byte count. The worker verifies fetched manifests/configuration against SHA256 but does not fetch or verify layer payloads. The cumulative largest-first curve is an analytical concentration view, not a proposed download sequence or timing model. Cache reuse, parallelism, overhead and unpacked size are outside its scope. No package artifact or container image is installed or run.
+- **Wheels:** live PyPI `pandas` **2.2.3** artifact metadata. Selection requires exact Python
+  and ABI fields and explicitly unyanked files. A dotted platform field counts as one file;
+  the chart shows its first alias and the table retains all tags. Declared sizes and hashes
+  do not establish installed footprint, compatibility, performance or payload integrity.
+- **Dependencies:** npm supplies a bounded `apache-arrow` discovery page. PyPI supplies the
+  current project record, native version strings, and exact 2.2.3 dependency declarations.
+  The current project's Python requirement is not assigned to the older release. Marker
+  text is classified, not evaluated; declarations and distinct package names have separate
+  counts. This is neither a PEP 508 evaluator nor a dependency solver. Missing publication
+  times/yanking fields remain NULL; no universal version ordering is invented.
+- **Containers:** Quay `prometheus/prometheus:v3.2.1` resolved on **2026-11-14** to the index
+  recorded in provenance. Book 02 uses that immutable digest; book 04 independently resolves
+  the tag and compares it with the anchor, reporting a changed tag truthfully. The provenance
+  file is a historical anchor, not a saved HTTP replay. Bounded search/tag pages are not
+  complete inventories; absence from a page does not establish absence from the registry.
+  The worker verifies fetched manifest/configuration SHA256, but layer sizes/hashes remain
+  declarations. MiB = 2^20 bytes. Largest-first accumulation measures concentration, not
+  download order, elapsed time, unpacked size or runtime behavior.
 
-## Live sources and checks
+The helper supplies explicit anonymous PyPI/npm/Quay roots and an empty disposable cache.
+Shared `connect(globals())` creates an empty temporary SQL-secret directory, disables
+persistent secrets and default-INI autoload, and sets UTC at connection creation. Both
+catalogs can resolve registry secrets at bind time, so this isolation also matters for
+public reads. Every notebook drains an empty secret inventory before ATTACH and at cleanup;
+none creates credentials. Cleanup closes SQL and removes temporary state, restoring the
+inherited configuration/cache settings. Existing saved secrets are never read or altered.
 
-[PublicSources](notebook_support.py) uses the worker's supported JSON settings to isolate anonymous PyPI/Quay endpoints and an empty disposable cache. It restores inherited configuration and cache paths after closing the SQL connection. No private endpoints or credentials enter outputs. These notebooks perform real public reads and have no replay/fallback path. A required upstream failure fails execution and preserves the prior saved notebook. Rows carry observed UTC times, which describe retrieval rather than release upload time; the image figures also show the run start in UTC. Registry retention, metadata and yanking can change.
+All remote calls are materialized before local display queries. Result-derived prose and
+SQL checks retain NULLs and distinguish retrieval from publication time. The original
+stories contain 11 and 12 checks; the added discovery/identity stories contain 13 and 12.
+This notebook-only migration reuses green source CI **43614741410**, rather than rebuilding
+workers or rerunning source/container workflows. Source and root dependency locks are unchanged.
 
-Worker calls are materialized before separate local display queries. Result limits are 1,000 rows, and checks fail if the bound is reached. Eleven package checks cover identity, exact tags, yanking, sizes, hashes and observation timestamps. Twelve image checks cover parent/child ownership, unique contiguous layer positions, configuration identity/rootfs count, bytes/MiB conversion and cumulative endpoints. Missing values are not replaced with zero. MiB means 2^20 bytes.
+## Coverage evidence
 
-Official references: [PyPI JSON API](https://docs.pypi.org/api/json/), [wheel filename fields](https://packaging.python.org/en/latest/specifications/binary-distribution-format/#file-name-convention), [platform compatibility tags](https://packaging.python.org/en/latest/specifications/platform-compatibility-tags/), and [OCI image specification](https://github.com/opencontainers/image-spec). Source endpoints and exact provenance are bundled; no upstream response fixture is substituted for live execution.
+[coverage-packages.json](coverage-packages.json) and
+[coverage-containers.json](coverage-containers.json) retain complete, independent release
+and current-public-main catalogs, native function/table/view exports, execution receipts
+and editorial mappings. Same-named table/function aliases and overloads count once within
+a catalog; identities are not merged across entrypoints.
 
-The saved defaults embed outputs. Generated logs, images and separate experiments are ignored under `validation/`. Experiment copies include fixtures/provenance, branding, helper, runner and environment files. [STANDARD.md](STANDARD.md) records presentation conventions.
+- Packages: **8/11** logical surfaces, above the required **6/11**. The undemonstrated starter
+  surfaces `greet`, `sequence_table` and `fetch_items` remain in the denominator, including
+  the credential-capable API example.
+- Containers: **10/10**, meeting the complete-coverage requirement for a ten-surface catalog.
+- Aggregate: **18/21**, reported in addition to, never instead of, the independent thresholds.
 
-Source `make check` passed: 55 Bun tests; starter/recipe SQL assertions 80 stdio, 80 Unix-launch and 43 HTTP; 54 production SQL checks per transport across both workers; Biome and TypeScript gates. Both metadata catalogs score 100/100 L2 with zero errors/warnings and one existing informational source-ID foreign-key suggestion each; the repository's configured gate passes. No source code or root dependency locks were changed.
+Both released/current interfaces have the same logical names and native input signatures.
+Examples execute v0.2.0; current-interface editorial compatibility does not claim current
+main ran analytically. Native current-main exports are separate read-only catalog probes.
+Full coverage rules and runner live in the [shared standard](https://github.com/Query-farm/vgi-example-notebooks/blob/v0.3.44/docs/standard.md).
 
-## SQL credential isolation
-
-Each public notebook creates Haybarn with a fresh temporary `secret_directory`
-and `allow_persistent_secrets=False` before attaching workers. It fully drains
-and verifies an empty SQL secret inventory before retrieval and again at cleanup.
-These public examples create no SQL credentials. Cleanup closes the connection
-and removes its temporary directory. Existing saved SQL secrets are neither
-read, modified nor deleted; anonymous/source configuration remains explicit.
+References: [PyPI JSON API](https://docs.pypi.org/api/json/),
+[wheel filename fields](https://packaging.python.org/en/latest/specifications/binary-distribution-format/#file-name-convention),
+[dependency specifiers](https://packaging.python.org/en/latest/specifications/dependency-specifiers/),
+and [OCI image specification](https://github.com/opencontainers/image-spec).
