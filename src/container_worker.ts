@@ -12,9 +12,13 @@ const doc =
   "Results preserve native namespace/repository identities as `VARCHAR` and include the configured source ID and ecosystem. Optional provider summaries and star/pull counts (`BIGINT`) may be NULL; absence is not a zero count. Image manifests are verified by SHA256. A multi-platform index holds descriptors with digest, operating system, architecture and variant; choose a platform descriptor before requesting layer or configuration details. Layer positions and declared sizes are `BIGINT`; configuration exposes the operating system, architecture and verified configuration digest. Native details remain sanitized JSON text in metadata. " +
   "Read configured source capabilities before choosing a provider. SQL calls require nonempty search text or repository names. Arguments must be literals (no LATERAL column references); combine operations by joining separate calls, for example platforms to layers on the platform digest. Row limits are from 1 through 10000; repository searches require an explicit limit, while other reads default to 1000 via a named max_results argument. Missing optional upstream fields remain SQL NULL. API requests also have independent byte, request and elapsed-time budgets. No function installs packages, executes image commands or downloads layer payloads. Private reads use source-scoped software_registry secrets or configured environment/file references; secrets are not returned in metadata.";
 
+/** The catalog's one-line directory blurb: plain text, distinct from the long docs. */
+const comment =
+  "Search Docker Hub, Quay, GitHub Container Registry and GitLab container repositories from SQL and inspect OCI image tags, manifests, platforms, layers and configuration without pulling images.";
+
 export const CONTAINER_CATALOG: CatalogDescriptor = {
   name: "containers",
-  comment: doc,
+  comment,
   sourceUrl: SOURCE_URL,
   secretTypes: [REGISTRY_SECRET],
   tags: {
@@ -25,7 +29,8 @@ export const CONTAINER_CATALOG: CatalogDescriptor = {
     "vgi.doc_md":
       "## Container registry metadata\n\n" +
       doc +
-      "\n\n### Immutable references\n\nResolve tags with manifest, inspect platforms, and select a platform digest before reading layers or configuration. Search coverage is determined by each provider and account permissions.",
+      "\n\n### Immutable references\n\nResolve tags with manifest, inspect platforms, and select a platform digest before reading layers or configuration. Search coverage is determined by each provider and account permissions." +
+      "\n\n### Upstream specifications\n\nRegistry reads follow the [OCI Distribution Specification](https://github.com/opencontainers/distribution-spec/blob/main/spec.md) and decode the [OCI Image Format](https://github.com/opencontainers/image-spec). Repository search and descriptions come from the [Docker Hub API](https://docs.docker.com/reference/api/hub/latest/), the [Quay API](https://docs.quay.io/api/), the [GitHub Packages API](https://docs.github.com/en/rest/packages/packages) and the [GitLab container registry API](https://docs.gitlab.com/api/container_registry/).",
     "vgi.keywords": JSON.stringify(["docker", "quay", "oci", "containers", "image search", "authentication"]),
     "vgi.agent_test_tasks": JSON.stringify([
       {

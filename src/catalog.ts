@@ -8,7 +8,7 @@
 import type { CatalogDescriptor, VgiFunction } from "@query-farm/vgi";
 import { API_SECRET_TYPE, fetchItems } from "./fetch_items.ts";
 import { greet, greetWithStyle } from "./greet.ts";
-import { CATALOG_DOC_MD, CATALOG_NAME, CATALOG_TAGS, SCHEMA_DOC_MD, SCHEMA_TAGS, SOURCE_URL } from "./meta.ts";
+import { CATALOG_COMMENT, CATALOG_NAME, CATALOG_TAGS, SCHEMA_COMMENT, SCHEMA_TAGS, SOURCE_URL } from "./meta.ts";
 import { sequenceTable } from "./sequence.ts";
 import { REGISTRY_SECRET, softwareFunctions, softwareTables } from "./software/functions.ts";
 
@@ -44,14 +44,14 @@ const ALL_EXAMPLES = stampExampleQueries(FUNCTIONS);
 
 export const CATALOG: CatalogDescriptor = {
   name: CATALOG_NAME,
-  comment: CATALOG_DOC_MD,
+  comment: CATALOG_COMMENT,
   sourceUrl: SOURCE_URL,
   tags: CATALOG_TAGS,
   secretTypes: [API_SECRET_TYPE, REGISTRY_SECRET],
   schemas: [
     {
       path: ["main"],
-      comment: SCHEMA_DOC_MD,
+      comment: SCHEMA_COMMENT,
       functions: FUNCTIONS,
       tables: softwareTables(FUNCTIONS),
       tags: { ...SCHEMA_TAGS, "vgi.example_queries": JSON.stringify(ALL_EXAMPLES) },
