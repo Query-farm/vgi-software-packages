@@ -27,7 +27,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: ci/check-version.sh "$GITHUB_REF_NAME"
       - name: Prepare release once before parallel uploads
         env:
